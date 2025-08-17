@@ -6,6 +6,8 @@ import base64
 import streamlit as st
 
 
+
+
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
@@ -14,97 +16,144 @@ def _logo_b64(path: str) -> str:
 
 
 def inject_brand_css():
-    # Palette
-    brand_bg      = "#042B80"   # bleu fond (ton logo)
-    brand_blue    = "#0C3D91"
-    brand_orange  = "#F7941D"
-    text_light    = "#FFFFFF"   # blanc (sur fond foncé)
-    text_dark     = "#0B1F44"   # texte foncé (sur fonds clairs)
+    # --- Couleurs marque ---
+    brand_blue   = "#0C3D91"
+    brand_orange = "#F7941D"
 
+    # Texte sombre (à utiliser sur fonds clairs : tags, alertes…)
+    dark_text    = "#0B1F44"
+    # Texte clair (global) lisible sur le fond bleu
+    light_text   = "#FFFFFF"
+
+    # --- Fond de page ---
+    bg = "#042B80"           # bleu FRESH DISTRIB foncé
+    pattern_opacity = 0.012  # motif discret
+
+    # --- Cartouche central blanc (0.0 = off, 1.0 = blanc opaque) ---
+    panel_alpha = 0.0
+
+    # --- Logo (facultatif) ---
     logo_b64 = _logo_b64("assets/company_logo.png")
 
     st.markdown(f"""
     <style>
-      /* ===== FOND ===== */
+      /* ================== FOND ================== */
       .stApp {{
-        background: linear-gradient(0deg,{brand_bg},{brand_bg});
+        background:
+          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
+          linear-gradient(160deg, {bg} 0%, {bg} 45%, {bg} 100%);
         background-attachment: fixed;
       }}
-      {'.stApp::before{content:"";position:fixed;inset:0;background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px;background-size:140px;opacity:.05;pointer-events:none;}' if logo_b64 else ''}
+      /* Filigrane logo très léger (optionnel) */
+      {'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }}' if logo_b64 else ''}
 
-      /* ===== TEXTE GÉNÉRAL (blanc) ===== */
-      .stApp .stMarkdown, .stApp .markdown-text-container,
-      .stApp p, .stApp li, .stApp label,
-      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{
-        color: {text_light} !important;
+      /* ================== TEXTE GLOBAL (fond bleu) ================== */
+      .stMarkdown, .markdown-text-container, p, li, span, label {{ color: {light_text} !important; }}
+      h1,h2,h3,h4,h5,h6 {{ color: {light_text} !important; }}
+
+      /* ================== PANNEAU CENTRAL (si activé) ================== */
+      section.main > div:first-child {{
+        background: rgba(255,255,255,{panel_alpha});
+        border-radius: 16px;
+        /* Ne force pas la couleur ici pour ne pas casser les champs blancs */
       }}
 
-      /* ===== CONTRÔLES (texte foncé sur fond clair) ===== */
-      [data-baseweb="input"] *, [data-baseweb="select"] *,
-      .stTextInput input, .stNumberInput input, .stTextArea textarea,
-      .stDateInput input, [data-baseweb="menu"] * {{
-        color: {text_dark} !important;
+      /* ================== BOUTONS ================== */
+      .stButton>button {{
+        background: {brand_orange};
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        padding: .55rem 1rem;
+        box-shadow: 0 3px 0 #d17f12;
+      }}
+      .stButton>button:hover {{ background: #FFA23A; }}
+
+      /* ================== ONGLET (pills blanches + texte NOIR) ================== */
+      div[data-baseweb="tab-list"], div[role="tablist"]{{
+        gap:12px !important;
+        border-bottom:none !important;
+        padding-bottom:8px;
       }}
 
-      /* Tags MultiSelect : clairs + texte foncé */
-      [data-baseweb="tag"] {{
-        background:#E9F4FF !important;
-        border:1px solid rgba(12,61,145,.35) !important;
-      }}
-      [data-baseweb="tag"] * {{ color:{text_dark} !important; }}
-      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
-
-      /* ===== ALERTES / NOTIFS : texte foncé sur fond clair ===== */
-      [data-testid="stNotification"], .stAlert, .stAlert p, .stAlert span {{
-        color:{text_dark} !important;
-      }}
-
-      /* ===== ONGLETS (pills blanches, texte NOIR) ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{
-        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
-      }}
+      /* Boutons d’onglet (non sélectionnés) */
       div[data-baseweb="tab-list"] button,
-      div[role="tablist"] > button[role="tab"] {{
-        background:#FFF !important;
+      div[role="tablist"] > button[role="tab"]{{
+        background:#FFFFFF !important;
         border:1px solid rgba(12,61,145,.18) !important;
-        color:#000 !important;                      /* <-- NOIR */
-        padding:.45rem .9rem !important; border-radius:999px !important;
+        border-radius:999px !important;
+        padding:.45rem .9rem !important;
         box-shadow:0 1px 1px rgba(7,28,71,.06);
         font-weight:600 !important;
         transition:transform .12s, box-shadow .15s, border-color .15s;
+        color:#000 !important;                  /* ← texte NOIR */
       }}
+      /* Forcer tout le contenu (spans/icônes) en noir à l’intérieur */
+      div[data-baseweb="tab-list"] button * ,
+      div[role="tablist"] > button[role="tab"] * {{
+        color:#000 !important;
+        fill:#000 !important;
+      }}
+
+      /* Hover */
       div[data-baseweb="tab-list"] button:hover,
-      div[role="tablist"] > button[role="tab"]:hover {{
+      div[role="tablist"] > button[role="tab"]:hover{{
         transform:translateY(-1px);
         border-color:rgba(12,61,145,.35) !important;
         box-shadow:0 2px 6px rgba(7,28,71,.10);
       }}
+
+      /* Actif */
       div[data-baseweb="tab-list"] button[aria-selected="true"],
-      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-        color:#000 !important;                      /* <-- NOIR même actif */
+      div[role="tablist"] > button[role="tab"][aria-selected="true"]{{
+        color:#000 !important;
         border:1px solid {brand_orange} !important;
         box-shadow:0 2px 6px rgba(247,148,29,.25);
         font-weight:700 !important;
       }}
+      /* Soulignement orange (selon moteur Streamlit) */
       div[data-baseweb="tab-highlight"],
-      div[role="tablist"] > div[aria-hidden="true"] {{
-        background:{brand_orange} !important; height:3px !important; border-radius:2px;
+      div[role="tablist"] > div[aria-hidden="true"]{{
+        background:{brand_orange} !important;
+        height:3px !important;
+        border-radius:2px;
       }}
 
-      /* ===== BOUTONS ===== */
-      .stButton>button {{
-        background:{brand_orange}; color:#FFF; border:0; border-radius:10px;
-        padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
+      /* ================== TAGS / PILLS (MultiSelect) plus clairs ================== */
+      [data-baseweb="tag"] {{
+        background:#E9F4FF !important;                 /* bleu pastel clair */
+        border:1px solid rgba(12,61,145,.35) !important;
       }}
-      .stButton>button:hover {{ background:#FFA23A; }}
+      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
+      [data-baseweb="tag"] [data-baseweb="icon"] svg,
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* ===== Bloc d'info "temporaires" en rouge doux (si tu l'utilises) ===== */
+      /* ================== ALERTES / SUCCESS : texte sombre lisible ================== */
+      /* Streamlit utilise différents conteneurs selon versions : on couvre large */
+      div[data-testid="stAlert"],
+      div[role="alert"],
+      div[data-testid="stNotification"] {{
+        color:{dark_text} !important;
+      }}
+      div[data-testid="stAlert"] * ,
+      div[role="alert"] * ,
+      div[data-testid="stNotification"] * {{
+        color:{dark_text} !important;
+      }}
+
+      /* ================== Bloc info spécifique en ROUGE (optionnel) ================== */
       .temp-info {{
-        color:#8A1C1C !important; background:rgba(220,53,69,.08);
-        border:1px solid rgba(220,53,69,.45); border-radius:10px; padding:.75rem 1rem;
+        color:#8A1C1C !important;
+        background:rgba(220,53,69,.08);
+        border:1px solid rgba(220,53,69,.45);
+        border-radius:10px;
+        padding:.75rem 1rem;
+        line-height:1.4;
       }}
+      .temp-info b, .temp-info strong {{ color:#8A1C1C !important; }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 
@@ -1273,6 +1322,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
