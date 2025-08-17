@@ -20,8 +20,8 @@ def inject_brand_css():
     text_main    = "#0B1F44"
 
     # 👉 Version bleu TRÈS CLAIR
-    bg_start = "#ECF3FF"   # bleu pastel très clair
-    bg_mid   = "#DDEBFF"   # encore clair
+    bg_start = "#C9DFFF"   # bleu pastel très clair
+    bg_mid   = "#C9DFFF"   # encore clair
     bg_end   = "#C9DFFF"   # clair mais un peu plus saturé
     pattern_opacity = 0.012   # motif ultra discret
     panel_alpha     = 1.0     # cartes 100% blanches = lisibilité maximale
@@ -1250,6 +1250,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
