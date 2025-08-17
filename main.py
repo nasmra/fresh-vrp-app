@@ -6,7 +6,10 @@ import streamlit as st
 from pathlib import Path
 import base64
 
-# ---- Option : logo en filigrane (utilise assets/company_logo.png) ----
+import base64
+from pathlib import Path
+import streamlit as st
+
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
@@ -14,44 +17,58 @@ def _logo_b64(path: str) -> str:
     return base64.b64encode(p.read_bytes()).decode("utf-8")
 
 def inject_brand_css():
-    brand_blue = "#0C3D91"   # bleu Fresh distrib
-    brand_navy = "#071C47"   # bleu foncé
-    brand_orange = "#F7941D" # orange Fresh distrib
-    logo_b64 = _logo_b64("assets/company_logo.png")  # mets bien ton logo ici
+    # Couleurs marque
+    brand_blue   = "#0C3D91"
+    brand_navy   = "#071C47"
+    brand_orange = "#F7941D"
+    text_main    = "#0B1F44"   # texte principal lisible
+    text_muted   = "#223A6B"   # texte secondaire
+
+    # Version "soft" : fond plus clair
+    bg_start = "#1E57C5"   # bleu clair
+    bg_mid   = "#1A4CAD"   # bleu intermédiaire
+    bg_end   = "#0A2B64"   # bleu foncé doux
+
+    pattern_opacity = 0.02   # motif très discret
+    panel_alpha     = 0.97   # panneau central presque blanc
+
+    logo_b64 = _logo_b64("assets/company_logo.png")
 
     st.markdown(f"""
     <style>
-      /* Fond principal : dégradé + léger motif */
+      /* Fond : dégradé doux + motif discret */
       .stApp {{
         background:
-          radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px) 0 0/6px 6px,
-          linear-gradient(135deg, {brand_blue} 0%, {brand_navy} 55%, {brand_blue} 100%);
+          radial-gradient(rgba(255,255,255,{pattern_opacity}) 1px, transparent 1px) 0 0/8px 8px,
+          linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
         background-attachment: fixed;
       }}
 
-      /* Filigrane discret du logo (optionnel) */
-      {' .stApp::before { content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .08; pointer-events:none; }' if logo_b64 else ''}
+      /* (Optionnel) filigrane logo très léger en haut-gauche */
+      {' .stApp::before { content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .06; pointer-events:none; }' if logo_b64 else ''}
 
-      /* Conteneur central (effet "verre") */
-      .block-container {{
-        max-width: 1200px;
-      }}
+      /* Carte centrale quasi blanche pour une lecture facile */
       section.main > div:first-child {{
-        background: rgba(255,255,255,0.88);
-        backdrop-filter: saturate(140%) blur(3px);
+        background: rgba(255,255,255,{panel_alpha});
+        backdrop-filter: saturate(140%) blur(2px);
         border-radius: 16px;
-        box-shadow: 0 10px 28px rgba(7,28,71,.25);
+        box-shadow: 0 10px 28px rgba(7,28,71,.18);
         padding: 1rem 2rem 2rem;
+        color: {text_main};
       }}
 
-      /* Sidebar blanche avec liseré bleu */
+      /* Sidebar blanche + liseré bleu */
       [data-testid="stSidebar"] {{
         background: #FFFFFF;
         border-right: 4px solid {brand_blue};
+        color: {text_main};
       }}
 
-      /* Titres */
-      h1, h2, h3, h4 {{ color: {brand_navy}; }}
+      /* Forcer la couleur de texte pour tout le contenu markdown */
+      .stMarkdown, .markdown-text-container, p, li, span, label {{
+        color: {text_main} !important;
+      }}
+      h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
 
       /* Boutons */
       .stButton>button {{
@@ -64,19 +81,15 @@ def inject_brand_css():
       }}
       .stButton>button:hover {{ background: #FFA23A; }}
 
-      /* Onglets actifs soulignés orange */
+      /* Onglets actifs soulignés orange + texte bleu */
       div[data-baseweb="tab-list"] > *[aria-selected="true"] {{
         border-bottom: 3px solid {brand_orange} !important;
         color: {brand_blue} !important;
         font-weight: 700 !important;
       }}
-
-      /* Petits badges / chips */
-      .st-emotion-cache-1r6slb0, .st-emotion-cache-1kyxreq {{
-        border-color: {brand_blue} !important;
-      }}
     </style>
     """, unsafe_allow_html=True)
+
 
 inject_brand_css()
 
@@ -1243,6 +1256,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
