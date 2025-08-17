@@ -448,11 +448,30 @@ st.markdown(
 # =========================================================
 #                         HEADER
 # =========================================================
-from datetime import datetime
+# ⬇️ imports
+from datetime import datetime, timedelta, timezone
+try:
+    from zoneinfo import ZoneInfo   # Python ≥ 3.9
+    PARIS_TZ = ZoneInfo("Europe/Paris")
+except Exception:
+    PARIS_TZ = None  # fallback si zoneinfo indispo (ex: manque du package tzdata)
+
+def now_france_str(fmt: str = "%d/%m/%Y – %H:%M:%S") -> str:
+    """Renvoie la date/heure en France (Europe/Paris), DST auto."""
+    # 1) zoneinfo (recommandé)
+    if PARIS_TZ is not None:
+        return datetime.now(PARIS_TZ).strftime(fmt)
+    # 2) fallback pytz si installé
+    try:
+        import pytz
+        return datetime.now(pytz.timezone("Europe/Paris")).strftime(fmt)
+    except Exception:
+        # 3) fallback très simple (approx.) : UTC+2 (été) / adaptez si besoin
+        return (datetime.utcnow().replace(tzinfo=timezone.utc) + timedelta(hours=2)).strftime(fmt)
 
 inject_brand_css()
 
-now = datetime.now().strftime("%d/%m/%Y – %H:%M:%S")
+now = now_france_str()
 
 # — Carte orange centrée
 st.markdown(
@@ -787,10 +806,12 @@ with tab_opt:
                     st.download_button(
                         "📄 Télécharger PDF des tournées",
                         data=pdf_bytes,
-                        file_name=f"Tournées_{datetime.now():%Y-%m-%d}.pdf",
+                        file_name = f"Tournées_{datetime.now(PARIS_TZ):%Y-%m-%d}.pdf" if PARIS_TZ else f"Tournées_{datetime.utcnow():%Y-%m-%d}.pdf",
                         mime="application/pdf",
                         key="dl_pdf"
                     )
+
+                
                 except Exception as e:
                     st.error(f"Erreur génération PDF : {e}")
 
@@ -1311,6 +1332,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
