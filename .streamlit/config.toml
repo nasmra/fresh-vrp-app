@@ -1,0 +1,10 @@
+[theme]
+base = "light"
+primaryColor = "#0d6efd"                 # bleu bouton
+backgroundColor = "#ffffff"              # fond principal
+secondaryBackgroundColor = "#f5f7fb"     # fond des panneaux
+textColor = "#111827"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false                 # pas de télémétrie locale
