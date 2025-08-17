@@ -9,141 +9,150 @@ import streamlit as st
 
 
 
+from pathlib import Path
+import base64
+import streamlit as st
+
+
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
         return ""
     return base64.b64encode(p.read_bytes()).decode("utf-8")
 
+
 def inject_brand_css():
+    # Couleurs marque
     brand_blue   = "#0C3D91"
     brand_orange = "#F7941D"
     text_main    = "#0B1F44"
 
-    # Fond TRÈS clair (comme avant)
-    bg_start = "#00BFFF"
-    bg_mid   = "#00BFFF"
-    bg_end   = "#00BFFF"
-    pattern_opacity = 0.012
-    panel_alpha     = 1.0
+    # Fond très clair
+    bg_start = "#CFEFFF"
+    bg_mid   = "#AFE3FF"
+    bg_end   = "#8FD8FF"
+    pattern_opacity = 0.012   # motif discret
+    panel_alpha     = 1.0     # cartes bien blanches
 
     logo_b64 = _logo_b64("assets/company_logo.png")
-    logo_layer = (
-        f'''.stApp::before {{
-              content:""; position:fixed; inset:0;
-              background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px;
-              background-size:140px; opacity:.05; pointer-events:none;
-            }}''' if logo_b64 else ""
-    )
 
     st.markdown(f"""
-<style>
-/* --- Fond & panneau central (inchangé) --- */
-.stApp {{
-  background:
-    radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
-    linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
-  background-attachment: fixed;
-}}
-{logo_layer}
-section.main > div:first-child {{
-  background: rgba(255,255,255,{panel_alpha});
-  border-radius: 16px;
-  box-shadow: 0 10px 28px rgba(7,28,71,.10);
-  padding: 1rem 2rem 2rem;
-  color: {text_main};
-}}
-[data-testid="stSidebar"] {{
-  background:#fff; border-right:4px solid {brand_blue}; color:{text_main};
-}}
-.stMarkdown, .markdown-text-container, p, li, span, label {{ color:{text_main} !important; }}
-h1,h2,h3,h4,h5,h6 {{ color:{text_main} !important; }}
-.stButton>button {{
-  background:{brand_orange}; color:#fff; border:0; border-radius:10px;
-  padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
-}}
-.stButton>button:hover {{ background:#FFA23A; }}
+    <style>
+      /* ================== FOND ================== */
+      .stApp {{
+        background:
+          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
+          linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
+        background-attachment: fixed;
+      }}
 
-/* =========================
-   ONGLET “PILLS” ENCADRÉS
-   ========================= */
+      /* Filigrane logo très léger (si fichier dispo) */
+      {'.stApp::before {{ content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .05; pointer-events:none; }}' if logo_b64 else ''}
 
-/* Barre contenant les onglets */
-div[data-baseweb="tab-list"],
-div[role="tablist"] {{
-  display:flex; gap:8px !important;
-  padding:6px;
-  background: rgba(12,61,145,.08);
-  border: 1px solid rgba(12,61,145,.15);
-  border-radius: 12px;
-  box-shadow: inset 0 1px 1px rgba(7,28,71,.04);
-}}
+      /* ================== PANNEAU CENTRAL ================== */
+      section.main > div:first-child {{
+        background: rgba(255,255,255,{panel_alpha});
+        border-radius: 16px;
+        box-shadow: 0 10px 28px rgba(7,28,71,.10);
+        padding: 1rem 2rem 2rem;
+        color: {text_main};
+      }}
 
-/* Onglets (état par défaut) */
-div[data-baseweb="tab-list"] button,
-div[role="tablist"] > button[role="tab"] {{
-  background: rgba(255,255,255,.65);
-  border: 1px solid rgba(12,61,145,.25);
-  color: #0E2A5A !important;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-weight: 600;
-  line-height: 1;
-  box-shadow: 0 0 0 rgba(0,0,0,0);
-  transition: background .15s ease, box-shadow .15s ease,
-              border-color .15s ease, transform .08s ease, color .15s ease;
-}}
-/* --- Couleur de la ligne d’accent sous les onglets (TabHighlight) --- */
-div[data-baseweb="tab-highlight"],
-/* fallback pour certaines versions qui insèrent un div "aria-hidden" */
-div[role="tablist"] > div[aria-hidden="true"]{
-  background: #F7941D !important;   /* orange Fresh */
-  height: 3px !important;
-  border-radius: 2px;
-}
+      /* ================== SIDEBAR ================== */
+      [data-testid="stSidebar"] {{
+        background: #FFFFFF;
+        border-right: 4px solid {brand_blue};
+        color: {text_main};
+      }}
 
-/* Survol */
-div[data-baseweb="tab-list"] button:hover,
-div[role="tablist"] > button[role="tab"]:hover {{
-  background:#fff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(7,28,71,.08);
-  border-color: rgba(12,61,145,.35);
-  color:#06214F !important;
-}}
+      /* ================== TEXTE ================== */
+      .stMarkdown, .markdown-text-container, p, li, span, label {{
+        color: {text_main} !important;
+      }}
+      h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
 
-/* Actif (sélectionné) */
-div[data-baseweb="tab-list"] button[aria-selected="true"],
-div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-  background:#fff !important;
-  color:{text_main} !important;
-  border-color:{brand_orange} !important;
-  box-shadow: 0 3px 10px rgba(7,28,71,.12);
-}}
+      /* ================== BOUTONS ================== */
+      .stButton>button {{
+        background: {brand_orange};
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        padding: .55rem 1rem;
+        box-shadow: 0 3px 0 #d17f12;
+      }}
+      .stButton>button:hover {{ background: #FFA23A; }}
 
-/* Supprime tout soulignement résiduel (ancien thème) */
-div[data-baseweb="tab-list"] button::after,
-div[role="tablist"] > button[role="tab"]::after {{
-  content:none !important;
-}}
+      /* ================== ONGLETS (Tabs) ================== */
 
-/* Tags (MultiSelect) pour rester dans la charte */
-[data-baseweb="tag"] {{
-  background:{brand_blue} !important; color:#fff !important; border:0 !important;
-}}
-[data-baseweb="tag"] [data-baseweb="icon"] svg, [data-baseweb="tag"] svg {{
-  fill:#fff !important;
-}}
+      /* Conteneur des onglets */
+      div[data-baseweb="tab-list"],
+      div[role="tablist"] {{
+        gap: 12px !important;
+        border-bottom: none !important;    /* on enlève la ligne grise */
+        padding-bottom: 6px;
+      }}
 
-/* Bloc d’info custom si besoin */
-.temp-info {{
-  color:#0E2A5A !important;
-  background:rgba(12,61,145,.08);
-  border:1px dashed rgba(12,61,145,.25);
-  border-radius:10px; padding:.75rem 1rem; line-height:1.4;
-}}
-</style>
-""", unsafe_allow_html=True)
+      /* Boutons d’onglet (état normal) */
+      div[data-baseweb="tab-list"] button,
+      div[role="tablist"] > button[role="tab"] {{
+        background: #ffffff !important;
+        border: 1px solid rgba(12,61,145,.18) !important;
+        color: #0E2A5A !important;
+        padding: .45rem .9rem !important;
+        border-radius: 999px !important;          /* effet pilule */
+        box-shadow: 0 1px 1px rgba(7,28,71,.06);
+        transition: color .15s ease, transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+        font-weight: 600 !important;
+      }}
+
+      /* Survol */
+      div[data-baseweb="tab-list"] button:hover,
+      div[role="tablist"] > button[role="tab"]:hover {{
+        transform: translateY(-1px);
+        border-color: rgba(12,61,145,.35) !important;
+        box-shadow: 0 2px 6px rgba(7,28,71,.10);
+      }}
+
+      /* Sélectionné */
+      div[data-baseweb="tab-list"] button[aria-selected="true"],
+      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
+        color: {text_main} !important;
+        border: 1px solid {brand_orange} !important;
+        box-shadow: 0 2px 6px rgba(247,148,29,.25);
+        font-weight: 700 !important;
+      }}
+
+      /* === Ligne d’accent/underline BaseWeb -> ORANGE === */
+      div[data-baseweb="tab-highlight"],
+      div[role="tablist"] > div[aria-hidden="true"] {{
+        background: {brand_orange} !important;
+        height: 3px !important;
+        border-radius: 2px;
+      }}
+
+      /* ================== TAGS / PILLS (MultiSelect) ================== */
+      [data-baseweb="tag"] {{
+        background: {brand_blue} !important;
+        color: #FFFFFF !important;
+        border: 0 !important;
+      }}
+      [data-baseweb="tag"] [data-baseweb="icon"] svg,
+      [data-baseweb="tag"] svg {{
+        fill: #FFFFFF !important;
+      }}
+
+      /* ================== BLOC INFO TEMPORAIRES ================== */
+      .temp-info {{
+        color: #0E2A5A !important;
+        background: rgba(12,61,145,.08);
+        border: 1px dashed rgba(12,61,145,.25);
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        line-height: 1.4;
+      }}
+    </style>
+    """, unsafe_allow_html=True)
+
 
 
 inject_brand_css()
@@ -1311,6 +1320,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
