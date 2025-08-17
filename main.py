@@ -10,7 +10,6 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
@@ -38,7 +37,7 @@ def inject_brand_css():
         background-attachment: fixed;
       }}
       /* Filigrane (un peu plus visible) */
-      {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; }' if logo_b64 else ''}
+      {'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; }}' if logo_b64 else ''}
 
       /* ===== Titres & textes généraux : BLANC ===== */
       .stApp .stMarkdown,
@@ -115,13 +114,35 @@ def inject_brand_css():
         background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
       }}
 
-      /* Tags (chips) par défaut */
+      /* Tags (chips) par défaut (sélecteurs "normaux") */
       [data-baseweb="tag"] {{
         background:#E9F4FF !important;
         border:1px solid rgba(12,61,145,.35) !important;
       }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
+
+      /* === Chips ROUGES pour les champs entourés par .unavail === */
+      .unavail [data-baseweb="tag"] {{
+        background: rgba(220,53,69,.12) !important;        /* fond rouge clair */
+        border: 1px solid rgba(220,53,69,.60) !important;  /* bord rouge */
+      }}
+      .unavail [data-baseweb="tag"] *,
+      .unavail [data-baseweb="tag"] svg {{
+        color:#7a0c0c !important;
+        fill:#7a0c0c !important;                            /* texte + icônes rouges */
+      }}
+
+      /* ===== Notice blanche à bord rouge (lisible sur fond bleu) ===== */
+      .notice-white-red {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px;
+        padding:.75rem 1rem;
+        color:#7a0c0c !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.10);
+      }}
+      .notice-white-red b, .notice-white-red strong {{ color:#7a0c0c !important; }}
 
       /* ===== Boutons (généraux) ===== */
       .stButton>button {{
@@ -130,8 +151,7 @@ def inject_brand_css():
       }}
       .stButton>button:hover {{ background:#FFA23A; }}
 
-      /* ===== Bouton "Entrer" du formulaire de login =====
-         (plusieurs sélecteurs pour couvrir différentes versions de Streamlit) */
+      /* ===== Bouton "Entrer" du formulaire de login ===== */
       .stApp [data-testid="stFormSubmitButton"] button,
       .stApp [data-testid="stForm"] .stButton > button,
       .stApp [data-testid="stForm"] button[type="submit"],
@@ -153,13 +173,14 @@ def inject_brand_css():
     """, unsafe_allow_html=True)
 
 
-
 def unavail_multiselect(label, options, key=None, **kwargs):
-    """Multiselect enveloppé dans un <div class='unavail'> pour obtenir des tags (chips) rouges."""
+    """Multiselect enveloppé dans un <div class='unavail'> pour obtenir des chips rouges."""
     st.markdown('<div class="unavail">', unsafe_allow_html=True)
     v = st.multiselect(label, options, key=key, **kwargs)
     st.markdown('</div>', unsafe_allow_html=True)
     return v
+
+
 
 
 inject_brand_css()
@@ -1327,6 +1348,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
