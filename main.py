@@ -6,9 +6,6 @@ import streamlit as st
 from pathlib import Path
 import base64
 
-import base64
-from pathlib import Path
-import streamlit as st
 
 def _logo_b64(path: str) -> str:
     p = Path(path)
@@ -19,58 +16,54 @@ def _logo_b64(path: str) -> str:
 def inject_brand_css():
     # Couleurs marque
     brand_blue   = "#0C3D91"
-    brand_navy   = "#071C47"
     brand_orange = "#F7941D"
-    text_main    = "#0B1F44"   # texte principal lisible
-    text_muted   = "#223A6B"   # texte secondaire
+    text_main    = "#0B1F44"
 
-    # Version "soft" : fond plus clair
-    bg_start = "#1E57C5"   # bleu clair
-    bg_mid   = "#1A4CAD"   # bleu intermédiaire
-    bg_end   = "#0A2B64"   # bleu foncé doux
-
-    pattern_opacity = 0.02   # motif très discret
-    panel_alpha     = 0.97   # panneau central presque blanc
+    # 👉 Version bleu TRÈS CLAIR
+    bg_start = "#ECF3FF"   # bleu pastel très clair
+    bg_mid   = "#DDEBFF"   # encore clair
+    bg_end   = "#C9DFFF"   # clair mais un peu plus saturé
+    pattern_opacity = 0.012   # motif ultra discret
+    panel_alpha     = 1.0     # cartes 100% blanches = lisibilité maximale
 
     logo_b64 = _logo_b64("assets/company_logo.png")
 
     st.markdown(f"""
     <style>
-      /* Fond : dégradé doux + motif discret */
+      /* Fond : dégradé bleu très clair + motif discret */
       .stApp {{
         background:
-          radial-gradient(rgba(255,255,255,{pattern_opacity}) 1px, transparent 1px) 0 0/8px 8px,
+          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
           linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
         background-attachment: fixed;
       }}
 
-      /* (Optionnel) filigrane logo très léger en haut-gauche */
-      {' .stApp::before { content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .06; pointer-events:none; }' if logo_b64 else ''}
+      /* (Optionnel) filigrane logo très léger */
+      {' .stApp::before { content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .05; pointer-events:none; }' if logo_b64 else ''}
 
-      /* Carte centrale quasi blanche pour une lecture facile */
+      /* Panneau central : blanc pour le contraste */
       section.main > div:first-child {{
         background: rgba(255,255,255,{panel_alpha});
-        backdrop-filter: saturate(140%) blur(2px);
         border-radius: 16px;
-        box-shadow: 0 10px 28px rgba(7,28,71,.18);
+        box-shadow: 0 10px 28px rgba(7,28,71,.10);
         padding: 1rem 2rem 2rem;
         color: {text_main};
       }}
 
-      /* Sidebar blanche + liseré bleu */
+      /* Sidebar blanche + liseré bleu marque */
       [data-testid="stSidebar"] {{
         background: #FFFFFF;
         border-right: 4px solid {brand_blue};
         color: {text_main};
       }}
 
-      /* Forcer la couleur de texte pour tout le contenu markdown */
+      /* Texte forcé pour rester lisible */
       .stMarkdown, .markdown-text-container, p, li, span, label {{
         color: {text_main} !important;
       }}
       h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
 
-      /* Boutons */
+      /* Boutons orange */
       .stButton>button {{
         background: {brand_orange};
         color: #fff;
@@ -81,7 +74,7 @@ def inject_brand_css():
       }}
       .stButton>button:hover {{ background: #FFA23A; }}
 
-      /* Onglets actifs soulignés orange + texte bleu */
+      /* Onglet actif */
       div[data-baseweb="tab-list"] > *[aria-selected="true"] {{
         border-bottom: 3px solid {brand_orange} !important;
         color: {brand_blue} !important;
@@ -89,6 +82,7 @@ def inject_brand_css():
       }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 inject_brand_css()
@@ -1256,6 +1250,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
