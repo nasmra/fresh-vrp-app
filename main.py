@@ -318,8 +318,8 @@ with col_txt:
            </div>""",
         unsafe_allow_html=True
     )
-with col_img:
-    st.image("C:\\Users\\CM3-23\\Downloads\\app_vrp\\3d_route.png", width=300, use_container_width=False)
+#with col_img:
+#    st.image("C:\\Users\\CM3-23\\Downloads\\app_vrp\\3d_route.png", width=300, use_container_width=False)
 
 col1, _ = st.columns([4,1])
 with col1:
@@ -1159,4 +1159,5 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
