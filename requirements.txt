@@ -1,7 +1,15 @@
-streamlit
+streamlit>=1.36
 pandas
-openpyxl
 numpy
-ortools
+openpyxl
+ortools==9.8.3296
+reportlab
 folium
 streamlit-folium
+
+# Google Drive API
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+httplib2
