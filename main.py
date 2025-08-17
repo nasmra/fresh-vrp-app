@@ -6,8 +6,11 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
-    """Cherche le logo à plusieurs emplacements (relatif & absolu)."""
+    """Retourne le logo encodé en base64.
+    Cherche à plusieurs emplacements (relatif & absolu) pour être robuste en prod/local.
+    """
     candidates = [
         Path(path),
         Path.cwd() / path,
@@ -54,8 +57,10 @@ def inject_brand_css():
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Onglets ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
+      /* ===== Onglets (pills blanches, texte noir) ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{
+        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
+      }}
       div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
         background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
         border-radius:999px !important; padding:.45rem .9rem !important;
@@ -135,11 +140,11 @@ def inject_brand_css():
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
-    """Multiselect avec chips rouges pour indisponibilités."""
+    """Multiselect enveloppé pour afficher des chips rouges (indisponibilités)."""
     st.markdown('<div class="unavail">', unsafe_allow_html=True)
-    v = st.multiselect(label, options, key=key, **kwargs)
+    value = st.multiselect(label, options, key=key, **kwargs)
     st.markdown('</div>', unsafe_allow_html=True)
-    return v
+    return value
 
 
 
@@ -1315,6 +1320,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
