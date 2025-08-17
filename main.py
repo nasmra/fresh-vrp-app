@@ -20,9 +20,9 @@ def inject_brand_css():
     text_main    = "#0B1F44"
 
     # Fond très clair
-    bg_start = "#CFEFFF"
-    bg_mid   = "#AFE3FF"
-    bg_end   = "#8FD8FF"
+    bg_start = "#4169E1	"
+    bg_mid   = "#4169E1	"
+    bg_end   = "#4169E1	"
     pattern_opacity = 0.012
     panel_alpha     = 1.0
 
@@ -1298,6 +1298,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
