@@ -20,139 +20,150 @@ def inject_brand_css():
     brand_orange = "#F7941D"
     text_main    = "#0B1F44"
 
-    # 👉 Version bleu TRÈS CLAIR
-    bg_start = "#00BFFF"    # bleu pastel très clair
-    bg_mid   = "#00BFFF"    # encore clair
-    bg_end   = "#00BFFF"    # clair mais un peu plus saturé
-    pattern_opacity = 0.012   # motif ultra discret
+    # 👉 Fond BLEU TRÈS CLAIR
+    bg_start = "#00BFFF"      # bleu pastel très clair
+    bg_mid   = "#00BFFF"
+    bg_end   = "#00BFFF"
+    pattern_opacity = 0.012   # motif ultra-discret
     panel_alpha     = 1.0     # cartes 100% blanches = lisibilité maximale
 
+    # Logo en filigrane (facultatif)
     logo_b64 = _logo_b64("assets/company_logo.png")
+    logo_layer = (
+        f'''.stApp::before {{
+              content: "";
+              position: fixed; inset: 0;
+              background: url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px;
+              background-size: 140px;
+              opacity: .05; pointer-events: none;
+            }}'''
+        if logo_b64 else ""
+    )
 
-    st.markdown(f"""
-    <style>
-      /* ================== FOND ================== */
-      .stApp {{
-        background:
-          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
-          linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
-        background-attachment: fixed;
-      }}
+    st.markdown(
+        f"""
+<style>
+/* ================== FOND ================== */
+.stApp {{
+  background:
+    radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
+    linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
+  background-attachment: fixed;
+}}
+{logo_layer}
 
-      /* Filigrane logo très léger (si disponible) */
-      {'.stApp::before {{ content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .05; pointer-events:none; }}' if logo_b64 else ''}
+/* ================== PANNEAU CENTRAL ================== */
+section.main > div:first-child {{
+  background: rgba(255,255,255,{panel_alpha});
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(7,28,71,.10);
+  padding: 1rem 2rem 2rem;
+  color: {text_main};
+}}
 
-      /* ================== PANNEAU CENTRAL ================== */
-      section.main > div:first-child {{
-        background: rgba(255,255,255,{panel_alpha});
-        border-radius: 16px;
-        box-shadow: 0 10px 28px rgba(7,28,71,.10);
-        padding: 1rem 2rem 2rem;
-        color: {text_main};
-      }}
+/* ================== SIDEBAR ================== */
+[data-testid="stSidebar"] {{
+  background: #FFFFFF;
+  border-right: 4px solid {brand_blue};
+  color: {text_main};
+}}
 
-      /* ================== SIDEBAR ================== */
-      [data-testid="stSidebar"] {{
-        background: #FFFFFF;
-        border-right: 4px solid {brand_blue};
-        color: {text_main};
-      }}
+/* ================== TEXTE GÉNÉRAL ================== */
+.stMarkdown, .markdown-text-container, p, li, span, label {{
+  color: {text_main} !important;
+}}
+h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
 
-      /* ================== TEXTE GÉNÉRAL ================== */
-      .stMarkdown, .markdown-text-container, p, li, span, label {{
-        color: {text_main} !important;
-      }}
-      h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
+/* ================== BOUTONS ================== */
+.stButton > button {{
+  background: {brand_orange};
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: .55rem 1rem;
+  box-shadow: 0 3px 0 #d17f12;
+}}
+.stButton > button:hover {{ background: #FFA23A; }}
 
-      /* ================== BOUTONS ================== */
-      .stButton>button {{
-        background: {brand_orange};
-        color: #fff;
-        border: 0;
-        border-radius: 10px;
-        padding: .55rem 1rem;
-        box-shadow: 0 3px 0 #d17f12;
-      }}
-      .stButton>button:hover {{ background: #FFA23A; }}
+/* ================== ONGLET (Tabs) ================== */
+/* Conteneur des onglets (vieux & nouveau sélecteur) */
+div[data-baseweb="tab-list"],
+div[role="tablist"] {{
+  gap: 18px !important;
+  border-bottom: 1px solid rgba(12,61,145,.25);
+  padding-bottom: 6px;
+}}
 
-      /* ================== ONGLET (Tabs) ================== */
-        # ================== ONGLET (Tabs) ==================
-        /* Conteneur des onglets (vieux & nouveau sélecteur) */
-        div[data-baseweb="tab-list"],
-        div[role="tablist"]{
-          gap: 18px !important;
-          border-bottom: 1px solid rgba(12,61,145,.25);
-          padding-bottom: 6px;
-        }
-    
-        /* Boutons d’onglet (non sélectionnés) */
-        div[data-baseweb="tab-list"] button,
-        div[role="tablist"] > button[role="tab"]{
-          background: transparent !important;
-          border: none !important;
-          color: #0E2A5A !important;
-          font-weight: 600 !important;
-          transition: color .2s ease, transform .12s ease;
-          position: relative;
-        }
-    
-        /* Hover */
-        div[data-baseweb="tab-list"] button:hover,
-        div[role="tablist"] > button[role="tab"]:hover{
-          color: #06214F !important;
-          transform: translateY(-1px);
-        }
-    
-        /* Etat sélectionné */
-        div[data-baseweb="tab-list"] button[aria-selected="true"],
-        div[role="tablist"] > button[role="tab"][aria-selected="true"]{
-          color: #0B1F44 !important;
-          font-weight: 700 !important;
-        }
-    
-        /* Soulignement orange animé pour l’onglet actif */
-        div[data-baseweb="tab-list"] button[aria-selected="true"]::after,
-        div[role="tablist"] > button[role="tab"][aria-selected="true"]::after{
-          content: "";
-          position: absolute;
-          left: 0; right: 0; bottom: -8px;
-          height: 3px;
-          background: linear-gradient(90deg, #F7941D 0%, #FFC66F 100%);
-          border-radius: 2px;
-          transform: scaleX(1);
-          transform-origin: left;
-          transition: transform .18s ease-out;
-        }
-    
-        /* On masque le soulignement quand non sélectionné (propre si baseweb laisse un ::after) */
-        div[data-baseweb="tab-list"] button:not([aria-selected="true"])::after,
-        div[role="tablist"] > button[role="tab"]:not([aria-selected="true"])::after{
-          transform: scaleX(0);
-        }
+/* Boutons d’onglet (non sélectionnés) */
+div[data-baseweb="tab-list"] button,
+div[role="tablist"] > button[role="tab"] {{
+  background: transparent !important;
+  border: none !important;
+  color: #0E2A5A !important;
+  font-weight: 600 !important;
+  transition: color .2s ease, transform .12s ease;
+  position: relative;
+}}
 
+/* Hover */
+div[data-baseweb="tab-list"] button:hover,
+div[role="tablist"] > button[role="tab"]:hover {{
+  color: #06214F !important;
+  transform: translateY(-1px);
+}}
 
-      /* ================== TAGS / PILLS (MultiSelect) ================== */
-      [data-baseweb="tag"] {{
-        background: {brand_blue} !important;
-        color: #FFFFFF !important;
-        border: 0 !important;
-      }}
-      [data-baseweb="tag"] [data-baseweb="icon"] svg,
-      [data-baseweb="tag"] svg {{
-        fill: #FFFFFF !important;        /* croix blanche */
-      }}
+/* État sélectionné */
+div[data-baseweb="tab-list"] button[aria-selected="true"],
+div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
+  color: #0B1F44 !important;
+  font-weight: 700 !important;
+}}
 
-      /* ================== BLOC INFO TEMPORAIRES ================== */
-      .temp-info {{
-        color: #0E2A5A !important;
-        background: rgba(12,61,145,.08);
-        border: 1px dashed rgba(12,61,145,.25);
-        border-radius: 10px;
-        padding: .75rem 1rem;
-        line-height: 1.4;
-      }}
-    </style>
-    """, unsafe_allow_html=True)
+/* Soulignement orange animé pour l’onglet actif */
+div[data-baseweb="tab-list"] button[aria-selected="true"]::after,
+div[role="tablist"] > button[role="tab"][aria-selected="true"]::after {{
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -8px;
+  height: 3px;
+  background: linear-gradient(90deg, {brand_orange} 0%, #FFC66F 100%);
+  border-radius: 2px;
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: transform .18s ease-out;
+}}
+
+/* On masque le soulignement quand non sélectionné (si présent) */
+div[data-baseweb="tab-list"] button:not([aria-selected="true"])::after,
+div[role="tablist"] > button[role="tab"]:not([aria-selected="true"])::after {{
+  transform: scaleX(0);
+}}
+
+/* ================== TAGS / PILLS (MultiSelect) ================== */
+[data-baseweb="tag"] {{
+  background: {brand_blue} !important;
+  color: #FFFFFF !important;
+  border: 0 !important;
+}}
+[data-baseweb="tag"] [data-baseweb="icon"] svg,
+[data-baseweb="tag"] svg {{
+  fill: #FFFFFF !important;  /* croix blanche */
+}}
+
+/* ================== BLOC INFO TEMPORAIRES ================== */
+.temp-info {{
+  color: #0E2A5A !important;
+  background: rgba(12,61,145,.08);
+  border: 1px dashed rgba(12,61,145,.25);
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  line-height: 1.4;
+}}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 
 
@@ -1321,6 +1332,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
