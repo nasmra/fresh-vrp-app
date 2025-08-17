@@ -6,6 +6,10 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+import base64
+from pathlib import Path
+import streamlit as st
+
 # --- Utilitaire: encoder le logo en base64 (optionnel)
 def _logo_b64(path: str) -> str:
     p = Path(path)
@@ -43,12 +47,6 @@ def inject_brand_css():
       .stMarkdown, .markdown-text-container, p, li, span, label {{ color: {light_text} !important; }}
       h1,h2,h3,h4,h5,h6 {{ color: {light_text} !important; }}
 
-      /* ===== Cartouche central (si activé) ===== */
-      section.main > div:first-child {{
-        background: rgba(255,255,255,{panel_alpha});
-        border-radius: 16px;
-      }}
-
       /* ===== Boutons ===== */
       .stButton>button {{
         background: {brand_orange};
@@ -76,12 +74,6 @@ def inject_brand_css():
       }}
       div[data-baseweb="tab-list"] button *,
       div[role="tablist"] > button[role="tab"] * {{ color:#000 !important; fill:#000 !important; }}
-      div[data-baseweb="tab-list"] button:hover,
-      div[role="tablist"] > button[role="tab"]:hover {{
-        transform:translateY(-1px);
-        border-color:rgba(12,61,145,.35) !important;
-        box-shadow:0 2px 6px rgba(7,28,71,.10);
-      }}
       div[data-baseweb="tab-list"] button[aria-selected="true"],
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
         color:#000 !important;
@@ -95,62 +87,52 @@ def inject_brand_css():
       }}
 
       /* ==========================================================
-         MENUS de sélection (les popovers sont rendus en "portal")
-         -> on cible AUSSI les éléments hors .stApp
+         MENUS de sélection (Baseweb/Streamlit rend en "portal").
+         -> Texte noir par défaut, ROUGE quand sélectionné.
          ========================================================== */
 
-      /* ---- Version portée par .stApp (utile en local) ---- */
-      .stApp div[data-baseweb="popover"] [data-baseweb="menu"],
-      .stApp div[data-baseweb="popover"] [role="listbox"] {{
+      /* Conteneur du menu (portal) */
+      div[data-baseweb="layer"] [role="listbox"],
+      div[data-baseweb="popover"] [role="listbox"] {{
         background:#FFFFFF !important;
         border:1px solid rgba(12,61,145,.35) !important;
         box-shadow:0 8px 24px rgba(7,28,71,.18);
-      }}
-      .stApp div[data-baseweb="popover"] [data-baseweb="menu"] *,
-      .stApp div[data-baseweb="popover"] [role="listbox"] *,
-      .stApp div[data-baseweb="popover"] [data-baseweb="menu"] svg,
-      .stApp div[data-baseweb="popover"] [role="listbox"] svg {{
-        color:#111 !important; fill:#111 !important; opacity:1 !important;
-      }}
-      .stApp div[data-baseweb="popover"] [role="option"] {{ color:#111 !important; }}
-      .stApp div[data-baseweb="popover"] [role="option"]:hover {{
-        background:#F3F6FB !important; color:#111 !important;
-      }}
-      .stApp div[data-baseweb="popover"] [role="option"][aria-selected="true"] {{
-        background:#FFE8E8 !important; color:#B21F2D !important;
-      }}
-      .stApp div[data-baseweb="popover"] [role="option"][aria-disabled="true"] {{
-        color:#555 !important; opacity:1 !important;
       }}
 
-      /* ---- Version "portal" globale (production Streamlit Cloud) ---- */
-      div[data-baseweb="layer"] div[data-baseweb="menu"],
-      div[data-baseweb="layer"] [role="listbox"],
-      div[data-baseweb="popover"] div[data-baseweb="menu"],
-      div[data-baseweb="popover"] [role="listbox"],
-      [role="listbox"] {{
-        background:#FFFFFF !important;
+      /* 1) AVANT SÉLECTION : texte NOIR partout */
+      [role="listbox"] [role="option"],
+      [role="listbox"] [role="option"] * {{
         color:#111 !important;
-        border:1px solid rgba(12,61,145,.35) !important;
-        box-shadow:0 8px 24px rgba(7,28,71,.18);
+        fill:#111 !important;
+        opacity:1 !important;      /* empêche l'effet grisé */
       }}
-      [role="listbox"] *, [role="listbox"] svg {{
-        color:#111 !important; fill:#111 !important; opacity:1 !important;
+
+      /* 2) SURVOL (non sélectionné) : fond gris léger, texte noir */
+      [role="listbox"] [role="option"]:hover {{
+        background:#F3F6FB !important;
+        color:#111 !important;
       }}
-      [role="option"]:hover {{
-        background:#F3F6FB !important; color:#111 !important;
+      [role="listbox"] [role="option"]:hover * {{
+        color:#111 !important; fill:#111 !important;
       }}
-      [role="option"][aria-selected="true"] {{
-        background:#FFE8E8 !important; color:#B21F2D !important;
+
+      /* 3) APRÈS SÉLECTION : texte ROUGE + fond rouge très clair */
+      [role="listbox"] [role="option"][aria-selected="true"],
+      [role="listbox"] [role="option"][aria-selected="true"] * {{
+        background:#FFE8E8 !important;
+        color:#B21F2D !important;
+        fill:#B21F2D !important;
       }}
-      [role="option"][aria-disabled="true"] {{
-        color:#555 !important; opacity:1 !important;
+      /* Hover sur déjà sélectionné : reste rouge */
+      [role="listbox"] [role="option"][aria-selected="true"]:hover {{
+        background:#FFD9D9 !important;
+        color:#B21F2D !important;
       }}
 
       /* ===== Placeholder des selects ===== */
       .stApp [data-baseweb="select"] input::placeholder {{ color: rgba(11,31,68,.60) !important; }}
 
-      /* ===== TAGS par défaut (bleu pastel) ===== */
+      /* ===== Tags sélectionnés (chips) par défaut ===== */
       [data-baseweb="tag"] {{
         background:#E9F4FF !important;
         border:1px solid rgba(12,61,145,.35) !important;
@@ -158,7 +140,7 @@ def inject_brand_css():
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* ===== Variante ROUGE pour “indisponibles” (via wrapper .unavail) ===== */
+      /* Variante ROUGE pour des champs spécifiques (envelopper dans .unavail) */
       .unavail [data-baseweb="tag"] {{
         background: rgba(220,53,69,.12) !important;
         border: 1px solid rgba(220,53,69,.55) !important;
@@ -167,29 +149,19 @@ def inject_brand_css():
         color:#7a0c0c !important; fill:#7a0c0c !important;
       }}
 
-      /* ===== Alertes / success : texte sombre lisible ===== */
+      /* Alertes lisibles */
       div[data-testid="stAlert"], div[role="alert"], div[data-testid="stNotification"] {{ color:{dark_text} !important; }}
-      div[data-testid="stAlert"] *, div[role="alert"] *, div[data-testid="stNotification"] * {{ color:{dark_text} !important; }}
-
-      /* ===== Bloc info rouge (optionnel) ===== */
-      .temp-info {{
-        color:#8A1C1C !important;
-        background:rgba(220,53,69,.08);
-        border:1px solid rgba(220,53,69,.45);
-        border-radius:10px; padding:.75rem 1rem; line-height:1.4;
-      }}
-      .temp-info b, .temp-info strong {{ color:#8A1C1C !important; }}
+      div[data-testid="stAlert"] * , div[role="alert"] * , div[data-testid="stNotification"] * {{ color:{dark_text} !important; }}
     </style>
     """, unsafe_allow_html=True)
 
 
-# --- Helper pour les champs "indisponibles" (les tags deviennent rouges)
+# (Optionnel) helper si tu veux des "chips" rouges pour les champs d’indisponibilité
 def unavail_multiselect(label, options, key=None, **kwargs):
-    """Multiselect enveloppé dans un <div class='unavail'> pour des tags rouges."""
     st.markdown('<div class="unavail">', unsafe_allow_html=True)
-    value = st.multiselect(label, options, key=key, **kwargs)
+    v = st.multiselect(label, options, key=key, **kwargs)
     st.markdown('</div>', unsafe_allow_html=True)
-    return value
+    return v
 
 
 
@@ -1356,6 +1328,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
