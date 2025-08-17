@@ -2,6 +2,84 @@ import os, time
 import streamlit as st
 from pathlib import Path
 
+import streamlit as st
+from pathlib import Path
+import base64
+
+# ---- Option : logo en filigrane (utilise assets/company_logo.png) ----
+def _logo_b64(path: str) -> str:
+    p = Path(path)
+    if not p.exists():
+        return ""
+    return base64.b64encode(p.read_bytes()).decode("utf-8")
+
+def inject_brand_css():
+    brand_blue = "#0C3D91"   # bleu Fresh distrib
+    brand_navy = "#071C47"   # bleu foncé
+    brand_orange = "#F7941D" # orange Fresh distrib
+    logo_b64 = _logo_b64("assets/company_logo.png")  # mets bien ton logo ici
+
+    st.markdown(f"""
+    <style>
+      /* Fond principal : dégradé + léger motif */
+      .stApp {{
+        background:
+          radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px) 0 0/6px 6px,
+          linear-gradient(135deg, {brand_blue} 0%, {brand_navy} 55%, {brand_blue} 100%);
+        background-attachment: fixed;
+      }}
+
+      /* Filigrane discret du logo (optionnel) */
+      {' .stApp::before { content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .08; pointer-events:none; }' if logo_b64 else ''}
+
+      /* Conteneur central (effet "verre") */
+      .block-container {{
+        max-width: 1200px;
+      }}
+      section.main > div:first-child {{
+        background: rgba(255,255,255,0.88);
+        backdrop-filter: saturate(140%) blur(3px);
+        border-radius: 16px;
+        box-shadow: 0 10px 28px rgba(7,28,71,.25);
+        padding: 1rem 2rem 2rem;
+      }}
+
+      /* Sidebar blanche avec liseré bleu */
+      [data-testid="stSidebar"] {{
+        background: #FFFFFF;
+        border-right: 4px solid {brand_blue};
+      }}
+
+      /* Titres */
+      h1, h2, h3, h4 {{ color: {brand_navy}; }}
+
+      /* Boutons */
+      .stButton>button {{
+        background: {brand_orange};
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        padding: .55rem 1rem;
+        box-shadow: 0 3px 0 #d17f12;
+      }}
+      .stButton>button:hover {{ background: #FFA23A; }}
+
+      /* Onglets actifs soulignés orange */
+      div[data-baseweb="tab-list"] > *[aria-selected="true"] {{
+        border-bottom: 3px solid {brand_orange} !important;
+        color: {brand_blue} !important;
+        font-weight: 700 !important;
+      }}
+
+      /* Petits badges / chips */
+      .st-emotion-cache-1r6slb0, .st-emotion-cache-1kyxreq {{
+        border-color: {brand_blue} !important;
+      }}
+    </style>
+    """, unsafe_allow_html=True)
+
+inject_brand_css()
+
 # =================== Auth ===================
 def _logout():
     """Nettoie la session et relance l'app."""
@@ -396,7 +474,7 @@ APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "assets" / "company_logo.png"
 
 if LOGO_PATH.exists():
-    st.sidebar.image(str(LOGO_PATH), width=220)
+    st.sidebar.image(str(LOGO_PATH), use_container_width=True)
 else:
     st.sidebar.warning("Logo introuvable (assets/company_logo.png)")
 st.sidebar.header("📂 Données")
@@ -1165,6 +1243,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
