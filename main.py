@@ -37,7 +37,8 @@ def inject_brand_css():
           linear-gradient(160deg, {bg} 0%, {bg} 45%, {bg} 100%);
         background-attachment: fixed;
       }}
-      {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }' if logo_b64 else ''}
+      /* Filigrane (un peu plus visible) */
+      {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; }' if logo_b64 else ''}
 
       /* ===== Titres & textes généraux : BLANC ===== */
       .stApp .stMarkdown,
@@ -45,7 +46,7 @@ def inject_brand_css():
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stMarkdown h1, .stApp .stMarkdown h2, .stApp .stMarkdown h3,
       .stApp .stMarkdown h4, .stApp .stMarkdown h5, .stApp .stMarkdown h6 {{ color:{light_text} !important; }}
-      /* Labels de widgets en BLANC (selects, inputs, sliders, etc.) */
+      /* Labels de widgets en BLANC */
       .stApp .stSelectbox > label,
       .stApp .stMultiSelect > label,
       .stApp .stTextInput > label,
@@ -57,7 +58,7 @@ def inject_brand_css():
       .stApp .stCheckbox > label,
       .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Onglets ===== */
+      /* ===== Onglets (pills blanches, texte noir) ===== */
       div[data-baseweb="tab-list"], div[role="tablist"] {{
         gap:12px !important; border-bottom:none !important; padding-bottom:8px;
       }}
@@ -113,10 +114,6 @@ def inject_brand_css():
       body [role="listbox"] [role="option"][aria-selected="true"] * {{
         background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
       }}
-      body [role="listbox"] [role="option"][aria-disabled="true"] *,
-      body [role="listbox"] [aria-disabled="true"] {{
-        color:#555 !important; opacity:1 !important;
-      }}
 
       /* Tags (chips) par défaut */
       [data-baseweb="tag"] {{
@@ -126,33 +123,35 @@ def inject_brand_css():
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* Variante ROUGE pour tags "indisponibles" : envelopper le widget dans <div class="unavail"> */
-      .unavail [data-baseweb="tag"] {{
-        background:rgba(220,53,69,.12) !important;
-        border:1px solid rgba(220,53,69,.55) !important;
-      }}
-      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{
-        color:#7a0c0c !important; fill:#7a0c0c !important;
-      }}
-
-      /* ===== Boutons (incl. bouton de login dans un st.form) ===== */
+      /* ===== Boutons (généraux) ===== */
       .stButton>button {{
         background:{brand_orange}; color:#fff; border:0; border-radius:10px;
         padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
       }}
       .stButton>button:hover {{ background:#FFA23A; }}
 
-      /* Bouton submit dans un formulaire (écran de login) */
-      .stApp [data-testid="stForm"] .stButton > button {{
-        background:{brand_orange} !important; color:#fff !important; border:0 !important;
-        border-radius:10px !important; padding:.55rem 1rem !important;
+      /* ===== Bouton "Entrer" du formulaire de login =====
+         (plusieurs sélecteurs pour couvrir différentes versions de Streamlit) */
+      .stApp [data-testid="stFormSubmitButton"] button,
+      .stApp [data-testid="stForm"] .stButton > button,
+      .stApp [data-testid="stForm"] button[type="submit"],
+      .stApp form button[type="submit"] {{
+        background:{brand_orange} !important;
+        color:#fff !important;
+        border:0 !important;
+        border-radius:10px !important;
+        padding:.55rem 1rem !important;
         box-shadow:0 3px 0 #d17f12 !important;
       }}
-      .stApp [data-testid="stForm"] .stButton > button:hover {{
+      .stApp [data-testid="stFormSubmitButton"] button:hover,
+      .stApp [data-testid="stForm"] .stButton > button:hover,
+      .stApp [data-testid="stForm"] button[type="submit"]:hover,
+      .stApp form button[type="submit"]:hover {{
         background:#FFA23A !important;
       }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
@@ -1326,6 +1325,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
