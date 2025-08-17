@@ -202,6 +202,13 @@ def require_login(idle_timeout_min: int | None = None):
 
     # Écran de connexion (si non authentifié)
     st.title("🔐 Accès protégé")
+    _logo = _logo_b64("assets/company_logo.png")
+    if _logo:
+        st.markdown(
+            f'<img src="data:image/png;base64,{_logo}" alt="Logo" height="56" style="margin:8px 0 4px 0;">',
+            unsafe_allow_html=True
+        )
+
     with st.form("login_form"):
         pwd = st.text_input("Mot de passe", type="password")
         ok = st.form_submit_button("Entrer")
@@ -1325,6 +1332,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
