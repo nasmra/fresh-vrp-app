@@ -10,11 +10,13 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
         return ""
     return base64.b64encode(p.read_bytes()).decode("utf-8")
+
 
 def inject_brand_css():
     brand_blue   = "#0C3D91"
@@ -43,7 +45,7 @@ def inject_brand_css():
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stMarkdown h1, .stApp .stMarkdown h2, .stApp .stMarkdown h3,
       .stApp .stMarkdown h4, .stApp .stMarkdown h5, .stApp .stMarkdown h6 {{ color:{light_text} !important; }}
-      /* Tous les labels de widgets en BLANC (selects, inputs, sliders, etc.) */
+      /* Labels de widgets en BLANC (selects, inputs, sliders, etc.) */
       .stApp .stSelectbox > label,
       .stApp .stMultiSelect > label,
       .stApp .stTextInput > label,
@@ -56,7 +58,9 @@ def inject_brand_css():
       .stApp label {{ color:{light_text} !important; }}
 
       /* ===== Onglets ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
+      div[data-baseweb="tab-list"], div[role="tablist"] {{
+        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
+      }}
       div[data-baseweb="tab-list"] button,
       div[role="tablist"] > button[role="tab"] {{
         background:#FFFFFF !important;
@@ -72,14 +76,23 @@ def inject_brand_css():
         border-color:{brand_orange} !important;
         box-shadow:0 2px 6px rgba(247,148,29,.25);
       }}
+      div[data-baseweb="tab-highlight"],
+      div[role="tablist"] > div[aria-hidden="true"] {{
+        background:{brand_orange} !important; height:3px !important; border-radius:2px;
+      }}
 
       /* ==========================================================
          LISTES DÉROULANTES — texte NOIR (zone + menu)
          ========================================================== */
       /* Zone fermée du select/multiselect */
       .stApp div[data-baseweb="select"],
-      .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
-      .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
+      .stApp div[data-baseweb="select"] * {{
+        color:#111 !important;
+        fill:#111 !important;
+      }}
+      .stApp [data-baseweb="select"] input::placeholder {{
+        color:rgba(0,0,0,.55) !important;
+      }}
 
       /* Menu déroulant (portal/layer) */
       body [data-baseweb="layer"] [role="listbox"],
@@ -89,30 +102,65 @@ def inject_brand_css():
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
       body [role="listbox"] [role="option"],
-      body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
+      body [role="listbox"] [role="option"] * {{
+        color:#111 !important; fill:#111 !important; opacity:1 !important;
+      }}
       body [role="listbox"] [role="option"]:hover,
-      body [role="listbox"] [role="option"]:hover * {{ background:#F3F6FB !important; color:#111 !important; fill:#111 !important; }}
+      body [role="listbox"] [role="option"]:hover * {{
+        background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
+      }}
       body [role="listbox"] [role="option"][aria-selected="true"],
-      body [role="listbox"] [role="option"][aria-selected="true"] * {{ background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important; }}
+      body [role="listbox"] [role="option"][aria-selected="true"] * {{
+        background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
+      }}
+      body [role="listbox"] [role="option"][aria-disabled="true"] *,
+      body [role="listbox"] [aria-disabled="true"] {{
+        color:#555 !important; opacity:1 !important;
+      }}
 
       /* Tags (chips) par défaut */
-      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
+      [data-baseweb="tag"] {{
+        background:#E9F4FF !important;
+        border:1px solid rgba(12,61,145,.35) !important;
+      }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* Boutons */
-      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      /* Variante ROUGE pour tags "indisponibles" : envelopper le widget dans <div class="unavail"> */
+      .unavail [data-baseweb="tag"] {{
+        background:rgba(220,53,69,.12) !important;
+        border:1px solid rgba(220,53,69,.55) !important;
+      }}
+      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{
+        color:#7a0c0c !important; fill:#7a0c0c !important;
+      }}
+
+      /* ===== Boutons (incl. bouton de login dans un st.form) ===== */
+      .stButton>button {{
+        background:{brand_orange}; color:#fff; border:0; border-radius:10px;
+        padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
+      }}
       .stButton>button:hover {{ background:#FFA23A; }}
+
+      /* Bouton submit dans un formulaire (écran de login) */
+      .stApp [data-testid="stForm"] .stButton > button {{
+        background:{brand_orange} !important; color:#fff !important; border:0 !important;
+        border-radius:10px !important; padding:.55rem 1rem !important;
+        box-shadow:0 3px 0 #d17f12 !important;
+      }}
+      .stApp [data-testid="stForm"] .stButton > button:hover {{
+        background:#FFA23A !important;
+      }}
     </style>
     """, unsafe_allow_html=True)
 
 
-# (Optionnel) helper si tu veux des "chips" rouges pour les champs d’indisponibilité
 def unavail_multiselect(label, options, key=None, **kwargs):
+    """Multiselect enveloppé dans un <div class='unavail'> pour obtenir des tags (chips) rouges."""
     st.markdown('<div class="unavail">', unsafe_allow_html=True)
     v = st.multiselect(label, options, key=key, **kwargs)
     st.markdown('</div>', unsafe_allow_html=True)
     return v
-
 
 
 inject_brand_css()
@@ -1278,6 +1326,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
