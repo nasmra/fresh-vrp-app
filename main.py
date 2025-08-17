@@ -2,9 +2,9 @@ import os, time
 import streamlit as st
 from pathlib import Path
 
-import streamlit as st
 from pathlib import Path
 import base64
+import streamlit as st
 
 
 def _logo_b64(path: str) -> str:
@@ -13,6 +13,7 @@ def _logo_b64(path: str) -> str:
         return ""
     return base64.b64encode(p.read_bytes()).decode("utf-8")
 
+
 def inject_brand_css():
     # Couleurs marque
     brand_blue   = "#0C3D91"
@@ -20,9 +21,9 @@ def inject_brand_css():
     text_main    = "#0B1F44"
 
     # 👉 Version bleu TRÈS CLAIR
-    bg_start = "#00BFFF"   # bleu pastel très clair
-    bg_mid   = "#00BFFF"   # encore clair
-    bg_end   = "#00BFFF"   # clair mais un peu plus saturé
+    bg_start = "#00BFFF"    # bleu pastel très clair
+    bg_mid   = "#00BFFF"    # encore clair
+    bg_end   = "#00BFFF"    # clair mais un peu plus saturé
     pattern_opacity = 0.012   # motif ultra discret
     panel_alpha     = 1.0     # cartes 100% blanches = lisibilité maximale
 
@@ -30,7 +31,7 @@ def inject_brand_css():
 
     st.markdown(f"""
     <style>
-      /* Fond : dégradé bleu très clair + motif discret */
+      /* ================== FOND ================== */
       .stApp {{
         background:
           radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
@@ -38,10 +39,10 @@ def inject_brand_css():
         background-attachment: fixed;
       }}
 
-      /* (Optionnel) filigrane logo très léger */
-      {' .stApp::before { content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .05; pointer-events:none; }' if logo_b64 else ''}
+      /* Filigrane logo très léger (si disponible) */
+      {'.stApp::before {{ content: ""; position: fixed; inset: 0; background: url("data:image/png;base64,' + logo_b64 + '") no-repeat 24px 24px; background-size: 140px; opacity: .05; pointer-events:none; }}' if logo_b64 else ''}
 
-      /* Panneau central : blanc pour le contraste */
+      /* ================== PANNEAU CENTRAL ================== */
       section.main > div:first-child {{
         background: rgba(255,255,255,{panel_alpha});
         border-radius: 16px;
@@ -50,20 +51,20 @@ def inject_brand_css():
         color: {text_main};
       }}
 
-      /* Sidebar blanche + liseré bleu marque */
+      /* ================== SIDEBAR ================== */
       [data-testid="stSidebar"] {{
         background: #FFFFFF;
         border-right: 4px solid {brand_blue};
         color: {text_main};
       }}
 
-      /* Texte forcé pour rester lisible */
+      /* ================== TEXTE GÉNÉRAL ================== */
       .stMarkdown, .markdown-text-container, p, li, span, label {{
         color: {text_main} !important;
       }}
       h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
 
-      /* Boutons orange */
+      /* ================== BOUTONS ================== */
       .stButton>button {{
         background: {brand_orange};
         color: #fff;
@@ -74,11 +75,41 @@ def inject_brand_css():
       }}
       .stButton>button:hover {{ background: #FFA23A; }}
 
-      /* Onglet actif */
-      div[data-baseweb="tab-list"] > *[aria-selected="true"] {{
+      /* ================== ONGLET (Tabs) ================== */
+      div[data-baseweb="tab-list"] button {{
+        color: #0E2A5A !important;      /* non sélectionné */
+        font-weight: 600 !important;
+        opacity: .95;
+      }}
+      div[data-baseweb="tab-list"] button:hover {{
+        color: {text_main} !important;   /* hover plus foncé */
+      }}
+      div[data-baseweb="tab-list"] button[aria-selected="true"] {{
+        color: {text_main} !important;   /* sélectionné */
         border-bottom: 3px solid {brand_orange} !important;
-        color: {brand_blue} !important;
         font-weight: 700 !important;
+        opacity: 1;
+      }}
+
+      /* ================== TAGS / PILLS (MultiSelect) ================== */
+      [data-baseweb="tag"] {{
+        background: {brand_blue} !important;
+        color: #FFFFFF !important;
+        border: 0 !important;
+      }}
+      [data-baseweb="tag"] [data-baseweb="icon"] svg,
+      [data-baseweb="tag"] svg {{
+        fill: #FFFFFF !important;        /* croix blanche */
+      }}
+
+      /* ================== BLOC INFO TEMPORAIRES ================== */
+      .temp-info {{
+        color: #0E2A5A !important;
+        background: rgba(12,61,145,.08);
+        border: 1px dashed rgba(12,61,145,.25);
+        border-radius: 10px;
+        padding: .75rem 1rem;
+        line-height: 1.4;
       }}
     </style>
     """, unsafe_allow_html=True)
@@ -1250,6 +1281,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
