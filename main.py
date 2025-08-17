@@ -810,7 +810,7 @@ with tab_drivers:
 
         # -------- FORMULAIRE AVEC CONFIRMATION + PROGRESSION --------
         with st.form("form_add_driver", clear_on_submit=False):
-            #confirm = st.selectbox("Confirmer l'ajout de ce chauffeur ?", ["Non", "Oui"], index=0, key="confirm_add")
+            confirm = st.selectbox("Confirmer l'ajout de ce chauffeur ?", ["Non", "Oui"], index=0, key="confirm_add")
             submitted = st.form_submit_button("💾 Cliquez pour enregistrer le chauffeur")
 
             if submitted:
@@ -1165,6 +1165,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
