@@ -448,26 +448,30 @@ st.markdown(
 # =========================================================
 #                         HEADER
 # =========================================================
-now = datetime.now().strftime("%d/%m/%Y – %H:%M:%S")
-col_txt, col_img = st.columns([1, 1.5], gap="large")
-with col_txt:
-    st.markdown(
-        f"""<div style="padding:15px; background:#ffffffcc; border-radius:8px;">
-             <h2 style="margin:0;">👋 Bonjour et bienvenue !</h2>
-             <p style="margin:0; font-size:0.9rem;">📅 {now}</p>
-           </div>""",
-        unsafe_allow_html=True
-    )
-#with col_img:
-#    st.image("C:\\Users\\CM3-23\\Downloads\\app_vrp\\3d_route.png", width=300, use_container_width=False)
+from datetime import datetime
 
-col1, _ = st.columns([4,1])
-with col1:
-    st.markdown(
-        "<div style='display:flex; align-items:center;'><h1 style='margin:0;'>📋 Gestion clients & optimisation des tournées</h1></div>",
-        unsafe_allow_html=True
-    )
+inject_brand_css()
+
+now = datetime.now().strftime("%d/%m/%Y – %H:%M:%S")
+
+# — Carte orange centrée
+st.markdown(
+    f"""
+    <div class="welcome-wrap">
+      <div class="welcome-card">
+        <h2>👋 Bonjour et bienvenue !</h2>
+        <p>📅 {now}</p>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# — Titre principal centré
+st.markdown('<h1 class="page-title">📋 Gestion clients & optimisation des tournées</h1>',
+            unsafe_allow_html=True)
 st.markdown("---")
+
 
 st.markdown("""
 **Mode d'emploi :**
@@ -1307,6 +1311,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
