@@ -1,5 +1,6 @@
 import os, time
 import streamlit as st
+from pathlib import Path
 
 # =================== Auth ===================
 def _logout():
@@ -391,7 +392,13 @@ chauff_file = st.session_state.get("chauff_buf")
 # =========================================================
 #                 SIDEBAR : DONNÉES / RECHARGER
 # =========================================================
-logo_path = r"C:\Users\CM3-23\Downloads\app_vrp\company_logo.png"
+APP_DIR = Path(__file__).resolve().parent
+LOGO_PATH = APP_DIR / "assets" / "company_logo.png"
+
+if LOGO_PATH.exists():
+    st.sidebar.image(str(LOGO_PATH), width=220)
+else:
+    st.sidebar.warning("Logo introuvable (assets/company_logo.png)")
 st.sidebar.image(logo_path, width=300)
 st.sidebar.header("📂 Données")
 
@@ -1159,5 +1166,6 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
