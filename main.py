@@ -6,15 +6,22 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-import base64
-from pathlib import Path
-import streamlit as st
-
-def _logo_b64(path: str) -> str:
-    p = Path(path)
-    if not p.exists():
-        return ""
-    return base64.b64encode(p.read_bytes()).decode("utf-8")
+def _logo_b64(path: str = "assets/company_logo.png") -> str:
+    """Cherche le logo à plusieurs emplacements (relatif & absolu)."""
+    candidates = [
+        Path(path),
+        Path.cwd() / path,
+        Path.cwd() / "assets" / "company_logo.png",
+        Path(__file__).resolve().parent / path,
+        Path(__file__).resolve().parent / "assets" / "company_logo.png",
+    ]
+    for p in candidates:
+        try:
+            if p.exists():
+                return base64.b64encode(p.read_bytes()).decode("utf-8")
+        except Exception:
+            pass
+    return ""
 
 
 def inject_brand_css():
@@ -25,88 +32,57 @@ def inject_brand_css():
     bg = "#042B80"
     pattern_opacity = 0.012
 
-    logo_b64 = _logo_b64("assets/company_logo.png")
+    logo_b64 = _logo_b64()
 
     st.markdown(f"""
     <style>
-      /* ===== Fond ===== */
+      /* ===== Fond + filigrane ===== */
       .stApp {{
         background:
           radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
           linear-gradient(160deg, {bg} 0%, {bg} 45%, {bg} 100%);
         background-attachment: fixed;
       }}
-      /* Filigrane (un peu plus visible) */
-      {'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; }}' if logo_b64 else ''}
+      {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & textes généraux : BLANC ===== */
-      .stApp .stMarkdown,
-      .stApp .markdown-text-container {{ color:{light_text} !important; }}
+      /* ===== Titres & labels en BLANC ===== */
+      .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
-      .stApp .stMarkdown h1, .stApp .stMarkdown h2, .stApp .stMarkdown h3,
-      .stApp .stMarkdown h4, .stApp .stMarkdown h5, .stApp .stMarkdown h6 {{ color:{light_text} !important; }}
-      /* Labels de widgets en BLANC */
-      .stApp .stSelectbox > label,
-      .stApp .stMultiSelect > label,
-      .stApp .stTextInput > label,
-      .stApp .stNumberInput > label,
-      .stApp .stDateInput > label,
-      .stApp .stTextArea > label,
-      .stApp .stSlider > label,
-      .stApp .stRadio > label,
-      .stApp .stCheckbox > label,
-      .stApp label {{ color:{light_text} !important; }}
+      .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
+      .stApp .stTextInput > label, .stApp .stNumberInput > label,
+      .stApp .stDateInput > label, .stApp .stTextArea > label,
+      .stApp .stSlider > label, .stApp .stRadio > label,
+      .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Onglets (pills blanches, texte noir) ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{
-        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
-      }}
-      div[data-baseweb="tab-list"] button,
-      div[role="tablist"] > button[role="tab"] {{
-        background:#FFFFFF !important;
-        border:1px solid rgba(12,61,145,.18) !important;
-        border-radius:999px !important;
-        padding:.45rem .9rem !important;
-        box-shadow:0 1px 1px rgba(7,28,71,.06);
-        font-weight:600 !important;
-        color:#000 !important;
+      /* ===== Onglets ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
+      div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
+        border-radius:999px !important; padding:.45rem .9rem !important;
+        box-shadow:0 1px 1px rgba(7,28,71,.06); font-weight:600 !important; color:#000 !important;
       }}
       div[data-baseweb="tab-list"] button[aria-selected="true"],
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-        border-color:{brand_orange} !important;
-        box-shadow:0 2px 6px rgba(247,148,29,.25);
+        border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25);
       }}
-      div[data-baseweb="tab-highlight"],
-      div[role="tablist"] > div[aria-hidden="true"] {{
+      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{
         background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
-      /* ==========================================================
-         LISTES DÉROULANTES — texte NOIR (zone + menu)
-         ========================================================== */
-      /* Zone fermée du select/multiselect */
+      /* ===== SELECTS : texte NOIR (contrôle + menu) ===== */
       .stApp div[data-baseweb="select"],
-      .stApp div[data-baseweb="select"] * {{
-        color:#111 !important;
-        fill:#111 !important;
-      }}
-      .stApp [data-baseweb="select"] input::placeholder {{
-        color:rgba(0,0,0,.55) !important;
-      }}
+      .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
+      .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
 
-      /* Menu déroulant (portal/layer) */
       body [data-baseweb="layer"] [role="listbox"],
       body [data-baseweb="popover"] [role="listbox"] {{
-        background:#FFF !important;
-        border:1px solid rgba(12,61,145,.35) !important;
+        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important;
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
-      body [role="listbox"] [role="option"],
-      body [role="listbox"] [role="option"] * {{
+      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{
         color:#111 !important; fill:#111 !important; opacity:1 !important;
       }}
-      body [role="listbox"] [role="option"]:hover,
-      body [role="listbox"] [role="option"]:hover * {{
+      body [role="listbox"] [role="option"]:hover, body [role="listbox"] [role="option"]:hover * {{
         background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
       }}
       body [role="listbox"] [role="option"][aria-selected="true"],
@@ -114,59 +90,44 @@ def inject_brand_css():
         background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
       }}
 
-      /* Tags (chips) par défaut (sélecteurs "normaux") */
-      [data-baseweb="tag"] {{
-        background:#E9F4FF !important;
-        border:1px solid rgba(12,61,145,.35) !important;
-      }}
+      /* ===== Chips ===== */
+      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* === Chips ROUGES pour les champs entourés par .unavail === */
+      /* Chips ROUGES pour les champs .unavail */
       .unavail [data-baseweb="tag"] {{
-        background: rgba(220,53,69,.12) !important;        /* fond rouge clair */
-        border: 1px solid rgba(220,53,69,.60) !important;  /* bord rouge */
+        background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important;
       }}
-      .unavail [data-baseweb="tag"] *,
-      .unavail [data-baseweb="tag"] svg {{
-        color:#7a0c0c !important;
-        fill:#7a0c0c !important;                            /* texte + icônes rouges */
-      }}
+      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Notice blanche à bord rouge (lisible sur fond bleu) ===== */
+      /* ===== Notice blanche bord rouge (lisible) ===== */
       .notice-white-red {{
-        background:#fff !important;
-        border:2px solid rgba(220,53,69,.60) !important;
-        border-radius:10px;
-        padding:.75rem 1rem;
-        color:#7a0c0c !important;
+        background:#fff !important; border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important;
         box-shadow:0 6px 18px rgba(7,28,71,.10);
       }}
-      .notice-white-red b, .notice-white-red strong {{ color:#7a0c0c !important; }}
 
-      /* ===== Boutons (généraux) ===== */
+      /* ===== Boutons généraux ===== */
       .stButton>button {{
         background:{brand_orange}; color:#fff; border:0; border-radius:10px;
         padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
       }}
       .stButton>button:hover {{ background:#FFA23A; }}
 
-      /* ===== Bouton "Entrer" du formulaire de login ===== */
+      /* ===== Boutons de FORMULAIRE (login, submit de forms) ===== */
       .stApp [data-testid="stFormSubmitButton"] button,
-      .stApp [data-testid="stForm"] .stButton > button,
-      .stApp [data-testid="stForm"] button[type="submit"],
-      .stApp form button[type="submit"] {{
-        background:{brand_orange} !important;
-        color:#fff !important;
-        border:0 !important;
-        border-radius:10px !important;
-        padding:.55rem 1rem !important;
-        box-shadow:0 3px 0 #d17f12 !important;
+      .stApp [data-testid="stForm"] button,
+      .stApp form button,
+      .stApp button[kind][data-testid^="baseButton"] {{
+        background:{brand_orange} !important; color:#fff !important;
+        border:0 !important; border-radius:10px !important;
+        padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
       }}
       .stApp [data-testid="stFormSubmitButton"] button:hover,
-      .stApp [data-testid="stForm"] .stButton > button:hover,
-      .stApp [data-testid="stForm"] button[type="submit"]:hover,
-      .stApp form button[type="submit"]:hover {{
+      .stApp [data-testid="stForm"] button:hover,
+      .stApp form button:hover,
+      .stApp button[kind][data-testid^="baseButton"]:hover {{
         background:#FFA23A !important;
       }}
     </style>
@@ -174,7 +135,7 @@ def inject_brand_css():
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
-    """Multiselect enveloppé dans un <div class='unavail'> pour obtenir des chips rouges."""
+    """Multiselect avec chips rouges pour indisponibilités."""
     st.markdown('<div class="unavail">', unsafe_allow_html=True)
     v = st.multiselect(label, options, key=key, **kwargs)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -474,6 +435,8 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
 #                    CONFIG / STYLES
 # =========================================================
 st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
+inject_brand_css()  # <= ICI : en dernier pour qu'il prenne le dessus
+
 st.markdown(
     """
     <style>
@@ -689,7 +652,11 @@ with tab_opt:
                         value=False
                     )
                 else:
-                    st.info("Aucun chauffeur temporaire dans la feuille 'Liste'.")
+                    st.markdown(
+    "<div class='notice-white-red'>Aucun chauffeur temporaire dans la liste.</div>",
+    unsafe_allow_html=True
+)
+
         finally:
             chauff_file.seek(0)
 
@@ -1348,6 +1315,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
