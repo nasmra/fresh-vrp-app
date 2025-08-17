@@ -10,25 +10,21 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-# --- Utilitaire: encoder le logo en base64 (optionnel)
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
         return ""
     return base64.b64encode(p.read_bytes()).decode("utf-8")
 
-
 def inject_brand_css():
-    # Couleurs / thème
     brand_blue   = "#0C3D91"
     brand_orange = "#F7941D"
     dark_text    = "#0B1F44"
     light_text   = "#FFFFFF"
 
-    # Fond principal (bleu Fresh Distrib)
     bg = "#042B80"
     pattern_opacity = 0.012
-    panel_alpha = 0.0   # 0 = pas de carte blanche centrale
+    panel_alpha = 0.0
 
     logo_b64 = _logo_b64("assets/company_logo.png")
 
@@ -43,13 +39,14 @@ def inject_brand_css():
       }}
       {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }' if logo_b64 else ''}
 
-      /* ===== Texte global (sur fond bleu) ===== */
-      .stMarkdown, .markdown-text-container, p, li, span, label {{ color: {light_text} !important; }}
+      /* ===== Texte global (sur fond bleu) =====
+         (⚠️ NE PAS inclure 'span' ici, sinon ça casse la couleur des Select) */
+      .stMarkdown, .markdown-text-container, p, li, label {{ color: {light_text} !important; }}
       h1,h2,h3,h4,h5,h6 {{ color: {light_text} !important; }}
 
       /* ===== Boutons ===== */
       .stButton>button {{
-        background: {brand_orange};
+        background: #F7941D;
         color: #fff;
         border: 0;
         border-radius: 10px;
@@ -70,28 +67,53 @@ def inject_brand_css():
         padding:.45rem .9rem !important;
         box-shadow:0 1px 1px rgba(7,28,71,.06);
         font-weight:600 !important;
-        color:#000 !important;    /* texte noir lisible */
+        color:#000 !important;
       }}
       div[data-baseweb="tab-list"] button *,
       div[role="tablist"] > button[role="tab"] * {{ color:#000 !important; fill:#000 !important; }}
       div[data-baseweb="tab-list"] button[aria-selected="true"],
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
         color:#000 !important;
-        border:1px solid {brand_orange} !important;
+        border:1px solid #F7941D !important;
         box-shadow:0 2px 6px rgba(247,148,29,.25);
         font-weight:700 !important;
       }}
       div[data-baseweb="tab-highlight"],
       div[role="tablist"] > div[aria-hidden="true"] {{
-        background:{brand_orange} !important; height:3px !important; border-radius:2px;
+        background:#F7941D !important; height:3px !important; border-radius:2px;
       }}
 
       /* ==========================================================
-         MENUS de sélection (Baseweb/Streamlit rend en "portal").
-         -> Texte noir par défaut, ROUGE quand sélectionné.
+         SELECTS / MULTISELECTS
+         ----------------------------------------------------------
+         - Texte NOIR dans la zone fermée (valeur/placeholder/chips)
+         - Menu déroulant (portal) : noir par défaut, rouge si sélectionné
          ========================================================== */
 
-      /* Conteneur du menu (portal) */
+      /* Zone fermée (contrôle) : forcer le NOIR partout */
+      .stApp .stSelectbox [data-baseweb="select"],
+      .stApp .stMultiSelect [data-baseweb="select"],
+      .stApp [data-baseweb="select"],
+      .stApp [data-baseweb="select"] * {{
+        color:#111 !important;
+        fill:#111 !important;
+      }}
+
+      /* Placeholder en gris foncé (lisible) */
+      .stApp [data-baseweb="select"] input::placeholder,
+      .stApp [data-baseweb="select"] [class*="placeholder"] {{
+        color:rgba(0,0,0,.55) !important;
+      }}
+
+      /* Chips/tags (multi) par défaut : bleu pastel + texte foncé */
+      [data-baseweb="tag"] {{
+        background:#E9F4FF !important;
+        border:1px solid rgba(12,61,145,.35) !important;
+      }}
+      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
+
+      /* Menu déroulant (portal) : container */
       div[data-baseweb="layer"] [role="listbox"],
       div[data-baseweb="popover"] [role="listbox"] {{
         background:#FFFFFF !important;
@@ -99,46 +121,31 @@ def inject_brand_css():
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
 
-      /* 1) AVANT SÉLECTION : texte NOIR partout */
+      /* AVANT sélection : texte NOIR */
       [role="listbox"] [role="option"],
       [role="listbox"] [role="option"] * {{
-        color:#111 !important;
-        fill:#111 !important;
-        opacity:1 !important;      /* empêche l'effet grisé */
+        color:#111 !important; fill:#111 !important; opacity:1 !important;
       }}
 
-      /* 2) SURVOL (non sélectionné) : fond gris léger, texte noir */
+      /* Survol : fond gris clair, texte noir */
       [role="listbox"] [role="option"]:hover {{
-        background:#F3F6FB !important;
-        color:#111 !important;
+        background:#F3F6FB !important; color:#111 !important;
       }}
       [role="listbox"] [role="option"]:hover * {{
         color:#111 !important; fill:#111 !important;
       }}
 
-      /* 3) APRÈS SÉLECTION : texte ROUGE + fond rouge très clair */
+      /* APRÈS sélection : texte ROUGE + fond rouge très clair */
       [role="listbox"] [role="option"][aria-selected="true"],
       [role="listbox"] [role="option"][aria-selected="true"] * {{
         background:#FFE8E8 !important;
         color:#B21F2D !important;
         fill:#B21F2D !important;
       }}
-      /* Hover sur déjà sélectionné : reste rouge */
       [role="listbox"] [role="option"][aria-selected="true"]:hover {{
         background:#FFD9D9 !important;
         color:#B21F2D !important;
       }}
-
-      /* ===== Placeholder des selects ===== */
-      .stApp [data-baseweb="select"] input::placeholder {{ color: rgba(11,31,68,.60) !important; }}
-
-      /* ===== Tags sélectionnés (chips) par défaut ===== */
-      [data-baseweb="tag"] {{
-        background:#E9F4FF !important;
-        border:1px solid rgba(12,61,145,.35) !important;
-      }}
-      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
-      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
       /* Variante ROUGE pour des champs spécifiques (envelopper dans .unavail) */
       .unavail [data-baseweb="tag"] {{
@@ -1328,6 +1335,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
