@@ -93,6 +93,14 @@ div[role="tablist"] > button[role="tab"] {{
   transition: background .15s ease, box-shadow .15s ease,
               border-color .15s ease, transform .08s ease, color .15s ease;
 }}
+/* --- Couleur de la ligne d’accent sous les onglets (TabHighlight) --- */
+div[data-baseweb="tab-highlight"],
+/* fallback pour certaines versions qui insèrent un div "aria-hidden" */
+div[role="tablist"] > div[aria-hidden="true"]{
+  background: #F7941D !important;   /* orange Fresh */
+  height: 3px !important;
+  border-radius: 2px;
+}
 
 /* Survol */
 div[data-baseweb="tab-list"] button:hover,
@@ -1303,6 +1311,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
