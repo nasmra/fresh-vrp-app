@@ -10,21 +10,25 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+# --- Utilitaire: encoder le logo en base64 (optionnel)
 def _logo_b64(path: str) -> str:
     p = Path(path)
     if not p.exists():
         return ""
     return base64.b64encode(p.read_bytes()).decode("utf-8")
 
+
 def inject_brand_css():
+    # Couleurs / thème
     brand_blue   = "#0C3D91"
     brand_orange = "#F7941D"
     dark_text    = "#0B1F44"
     light_text   = "#FFFFFF"
 
+    # Fond principal (bleu Fresh Distrib)
     bg = "#042B80"
     pattern_opacity = 0.012
-    panel_alpha = 0.0
+    panel_alpha = 0.0   # 0 = pas de carte blanche centrale
 
     logo_b64 = _logo_b64("assets/company_logo.png")
 
@@ -39,7 +43,7 @@ def inject_brand_css():
       }}
       {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }' if logo_b64 else ''}
 
-      /* ===== Texte global (fond bleu) ===== */
+      /* ===== Texte global (sur fond bleu) ===== */
       .stMarkdown, .markdown-text-container, p, li, span, label {{ color: {light_text} !important; }}
       h1,h2,h3,h4,h5,h6 {{ color: {light_text} !important; }}
 
@@ -60,7 +64,7 @@ def inject_brand_css():
       }}
       .stButton>button:hover {{ background: #FFA23A; }}
 
-      /* ===== Onglets (pills blanches) ===== */
+      /* ===== Onglets (pills blanches + texte noir) ===== */
       div[data-baseweb="tab-list"], div[role="tablist"] {{
         gap:12px !important; border-bottom:none !important; padding-bottom:8px;
       }}
@@ -72,7 +76,7 @@ def inject_brand_css():
         padding:.45rem .9rem !important;
         box-shadow:0 1px 1px rgba(7,28,71,.06);
         font-weight:600 !important;
-        color:#000 !important;
+        color:#000 !important;    /* texte noir lisible */
       }}
       div[data-baseweb="tab-list"] button *,
       div[role="tablist"] > button[role="tab"] * {{ color:#000 !important; fill:#000 !important; }}
@@ -94,22 +98,21 @@ def inject_brand_css():
         background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
-      /* ===== Menus de sélection : lisibles (fond blanc + texte foncé) ===== */
-      .stApp [data-baseweb="popover"] [data-baseweb="menu"],
-      .stApp [data-baseweb="menu"] {{
+      /* ===== Menus de sélection : fond blanc + texte foncé (lisible) ===== */
+      .stApp div[data-baseweb="popover"] [data-baseweb="menu"],
+      .stApp div[data-baseweb="menu"] {{
         background:#FFFFFF !important;
         color:{dark_text} !important;
         border:1px solid rgba(12,61,145,.35) !important;
       }}
-      .stApp [data-baseweb="menu-item"],
-      .stApp [data-baseweb="menu"] div[role="option"] {{
+      .stApp [data-baseweb="menu"] *,
+      .stApp [data-baseweb="menu"] svg {{
         color:{dark_text} !important;
+        fill:{dark_text} !important;
       }}
-      .stApp [data-baseweb="menu-item"]:hover,
       .stApp [data-baseweb="menu"] div[role="option"]:hover {{
         background:#F3F6FB !important; color:{dark_text} !important;
       }}
-      .stApp [data-baseweb="menu-item"][aria-selected="true"],
       .stApp [data-baseweb="menu"] div[role="option"][aria-selected="true"] {{
         background:rgba(247,148,29,.18) !important; color:{dark_text} !important;
       }}
@@ -126,7 +129,7 @@ def inject_brand_css():
       [data-baseweb="tag"] [data-baseweb="icon"] svg,
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* ===== Variante ROUGE pour les 'indisponibles' (via wrapper .unavail) ===== */
+      /* ===== Variante ROUGE pour “indisponibles” (via wrapper .unavail) ===== */
       .unavail [data-baseweb="tag"] {{
         background: rgba(220,53,69,.12) !important;     /* rouge clair */
         border: 1px solid rgba(220,53,69,.55) !important;
@@ -150,6 +153,16 @@ def inject_brand_css():
       .temp-info b, .temp-info strong {{ color:#8A1C1C !important; }}
     </style>
     """, unsafe_allow_html=True)
+
+
+# --- Helper pour les champs "indisponibles" (les tags deviennent rouges)
+def unavail_multiselect(label, options, key=None, **kwargs):
+    """Multiselect enveloppé dans un <div class='unavail'> pour des tags rouges."""
+    st.markdown('<div class="unavail">', unsafe_allow_html=True)
+    value = st.multiselect(label, options, key=key, **kwargs)
+    st.markdown('</div>', unsafe_allow_html=True)
+    return value
+
 
 
 inject_brand_css()
@@ -1317,6 +1330,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
