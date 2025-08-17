@@ -186,7 +186,11 @@ def unavail_multiselect(label, options, key=None, **kwargs):
 
 
 inject_brand_css()
+vehicules = ["IVECO FK-233-XA", "MERCEDES FL-777-AA", "MERCEDES GF-953-FD"]
+chauffeurs = ["Chauffeur 1 : Sami", "Chauffeur 2 : Mehdi", "Chauffeur 3 : Loris"]
 
+veh_indispo = unavail_multiselect("Véhicules indisponibles", vehicules, key="veh_indispo")
+chf_indispo = unavail_multiselect("Chauffeurs indisponibles", chauffeurs, key="chf_indispo")
 # =================== Auth ===================
 def _logout():
     """Nettoie la session et relance l'app."""
@@ -1350,6 +1354,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
