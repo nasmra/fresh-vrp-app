@@ -15,102 +15,97 @@ def _logo_b64(path: str) -> str:
 
 def inject_brand_css():
     # Palette
-    brand_bg      = "#042B80"   # bleu fond
+    brand_bg      = "#042B80"   # bleu fond (ton logo)
+    brand_blue    = "#0C3D91"
     brand_orange  = "#F7941D"
-    text_on_dark  = "#FFFFFF"
-    text_on_white = "#0B1F44"
+    text_light    = "#FFFFFF"   # blanc (sur fond foncé)
+    text_dark     = "#0B1F44"   # texte foncé (sur fonds clairs)
 
     logo_b64 = _logo_b64("assets/company_logo.png")
 
     st.markdown(f"""
     <style>
-      /* -------- FOND -------- */
+      /* ===== FOND ===== */
       .stApp {{
-        background:
-          linear-gradient(160deg, {brand_bg} 0%, {brand_bg} 100%);
+        background: linear-gradient(0deg,{brand_bg},{brand_bg});
         background-attachment: fixed;
       }}
-      {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.06; pointer-events:none; }' if logo_b64 else ''}
+      {'.stApp::before{content:"";position:fixed;inset:0;background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px;background-size:140px;opacity:.05;pointer-events:none;}' if logo_b64 else ''}
 
-      /* -------- TEXTE PAR DÉFAUT SUR FOND SOMBRE -------- */
-      .stApp, .stApp p, .stApp li, .stApp span, .stApp label,
+      /* ===== TEXTE GÉNÉRAL (blanc) ===== */
+      .stApp .stMarkdown, .stApp .markdown-text-container,
+      .stApp p, .stApp li, .stApp label,
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{
-        color: {text_on_dark} !important;
+        color: {text_light} !important;
       }}
 
-      /* -------- GARDER LE TEXTE FONCÉ DANS LES COMPOSANTS BLANCS -------- */
-      /* Sélects, multisélects, inputs, textarea, etc. */
-      [data-baseweb="select"] *, .stMultiSelect *, .stSelectbox *,
+      /* ===== CONTRÔLES (texte foncé sur fond clair) ===== */
+      [data-baseweb="input"] *, [data-baseweb="select"] *,
       .stTextInput input, .stNumberInput input, .stTextArea textarea,
-      .stDateInput input, .stDownloadButton button,
-      .stAlert, .stAlert * {{
-        color: {text_on_white} !important;
+      .stDateInput input, [data-baseweb="menu"] * {{
+        color: {text_dark} !important;
       }}
 
-      /* Pills des onglets (blanches) */
+      /* Tags MultiSelect : clairs + texte foncé */
+      [data-baseweb="tag"] {{
+        background:#E9F4FF !important;
+        border:1px solid rgba(12,61,145,.35) !important;
+      }}
+      [data-baseweb="tag"] * {{ color:{text_dark} !important; }}
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
+
+      /* ===== ALERTES / NOTIFS : texte foncé sur fond clair ===== */
+      [data-testid="stNotification"], .stAlert, .stAlert p, .stAlert span {{
+        color:{text_dark} !important;
+      }}
+
+      /* ===== ONGLETS (pills blanches, texte NOIR) ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{
+        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
+      }}
+      div[data-baseweb="tab-list"] button,
       div[role="tablist"] > button[role="tab"] {{
-        background: #ffffff !important;
-        color: {text_on_white} !important;
-        border: 1px solid rgba(255,255,255,.25) !important;
-        border-radius: 999px !important;
-        font-weight: 600 !important;
-        padding: .45rem .9rem !important;
-        box-shadow: 0 1px 1px rgba(7,28,71,.06);
-        transition: color .15s, transform .12s, box-shadow .15s, border-color .15s;
+        background:#FFF !important;
+        border:1px solid rgba(12,61,145,.18) !important;
+        color:#000 !important;                      /* <-- NOIR */
+        padding:.45rem .9rem !important; border-radius:999px !important;
+        box-shadow:0 1px 1px rgba(7,28,71,.06);
+        font-weight:600 !important;
+        transition:transform .12s, box-shadow .15s, border-color .15s;
       }}
+      div[data-baseweb="tab-list"] button:hover,
       div[role="tablist"] > button[role="tab"]:hover {{
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(7,28,71,.15);
+        transform:translateY(-1px);
+        border-color:rgba(12,61,145,.35) !important;
+        box-shadow:0 2px 6px rgba(7,28,71,.10);
       }}
+      div[data-baseweb="tab-list"] button[aria-selected="true"],
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-        border-color: {brand_orange} !important;
-        box-shadow: 0 2px 6px rgba(247,148,29,.25);
-        font-weight: 700 !important;
+        color:#000 !important;                      /* <-- NOIR même actif */
+        border:1px solid {brand_orange} !important;
+        box-shadow:0 2px 6px rgba(247,148,29,.25);
+        font-weight:700 !important;
       }}
-      /* Soulignement orange sous les onglets */
       div[data-baseweb="tab-highlight"],
       div[role="tablist"] > div[aria-hidden="true"] {{
-        background: {brand_orange} !important;
-        height: 3px !important;
-        border-radius: 2px;
+        background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
-      /* -------- TAGS / PILLS (MultiSelect) -------- */
-      [data-baseweb="tag"] {{
-        background: #E9F4FF !important;
-        border: 1px solid rgba(12,61,145,.35) !important;
-        color: {text_on_white} !important;
-      }}
-      [data-baseweb="tag"] * {{ color: {text_on_white} !important; }}
-
-      /* -------- BOUTONS -------- */
+      /* ===== BOUTONS ===== */
       .stButton>button {{
-        background: {brand_orange};
-        color: #fff !important;
-        border: 0;
-        border-radius: 10px;
-        padding: .55rem 1rem;
-        box-shadow: 0 3px 0 #d17f12;
+        background:{brand_orange}; color:#FFF; border:0; border-radius:10px;
+        padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
       }}
-      .stButton>button:hover {{ background: #FFA23A; }}
+      .stButton>button:hover {{ background:#FFA23A; }}
 
-      /* -------- BLOC INFO (rouge pour “aucun temporaire…”) -------- */
+      /* ===== Bloc d'info "temporaires" en rouge doux (si tu l'utilises) ===== */
       .temp-info {{
-        color: #FFE5E5 !important;
-        background: rgba(220,53,69,.18);
-        border: 1px solid rgba(220,53,69,.55);
-        border-radius: 10px;
-        padding: .75rem 1rem;
-      }}
-
-      /* -------- Sidebar blanche (lisible) -------- */
-      [data-testid="stSidebar"] {{
-        background: #FFFFFF;
-        border-right: 4px solid #0C3D91;
-        color: {text_on_white};
+        color:#8A1C1C !important; background:rgba(220,53,69,.08);
+        border:1px solid rgba(220,53,69,.45); border-radius:10px; padding:.75rem 1rem;
       }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 inject_brand_css()
@@ -1147,7 +1142,7 @@ with tab_add:
 
     with col_left:
         st.subheader("Ajouter un nouveau client")
-        st.caption("Cette action met à jour **Géocodage** et **Matrice des distances** sur Google Drive.")
+        st.caption("Cette action met à jour **Géocodage** et **Matrice des distances**.")
 
         # Formulaire
         addr = st.text_input("Adresse complète", placeholder="Nom, adresse")
@@ -1278,6 +1273,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
