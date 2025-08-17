@@ -2,9 +2,9 @@ import os, time
 import streamlit as st
 from pathlib import Path
 
-from pathlib import Path
 import base64
 import streamlit as st
+
 
 def _logo_b64(path: str) -> str:
     p = Path(path)
@@ -14,55 +14,79 @@ def _logo_b64(path: str) -> str:
 
 
 def inject_brand_css():
-    # Couleurs marque
-    brand_blue   = "#0C3D91"
-    brand_orange = "#F7941D"
-    text_main    = "#0B1F44"
-
-    # Fond très clair
-    bg_start = "#042B80"
-    bg_mid   = "#042B80"
-    bg_end   = "#042B80"
-    pattern_opacity = 0.012
-    panel_alpha     = 1.0
+    # Palette
+    brand_bg      = "#042B80"   # bleu fond
+    brand_orange  = "#F7941D"
+    text_on_dark  = "#FFFFFF"
+    text_on_white = "#0B1F44"
 
     logo_b64 = _logo_b64("assets/company_logo.png")
 
     st.markdown(f"""
     <style>
-      /* ===== FOND ===== */
+      /* -------- FOND -------- */
       .stApp {{
         background:
-          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
-          linear-gradient(160deg, {bg_start} 0%, {bg_mid} 45%, {bg_end} 100%);
+          linear-gradient(160deg, {brand_bg} 0%, {brand_bg} 100%);
         background-attachment: fixed;
       }}
-      {'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }}' if logo_b64 else ''}
+      {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.06; pointer-events:none; }' if logo_b64 else ''}
 
-      /* ===== PANNEAU CENTRAL ===== */
-      section.main > div:first-child {{
-        background: rgba(255,255,255,{panel_alpha});
-        border-radius: 16px;
-        box-shadow: 0 10px 28px rgba(7,28,71,.10);
-        padding: 1rem 2rem 2rem;
-        color: {text_main};
+      /* -------- TEXTE PAR DÉFAUT SUR FOND SOMBRE -------- */
+      .stApp, .stApp p, .stApp li, .stApp span, .stApp label,
+      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{
+        color: {text_on_dark} !important;
       }}
 
-      /* ===== SIDEBAR ===== */
-      [data-testid="stSidebar"] {{
-        background: #FFFFFF;
-        border-right: 4px solid {brand_blue};
-        color: {text_main};
+      /* -------- GARDER LE TEXTE FONCÉ DANS LES COMPOSANTS BLANCS -------- */
+      /* Sélects, multisélects, inputs, textarea, etc. */
+      [data-baseweb="select"] *, .stMultiSelect *, .stSelectbox *,
+      .stTextInput input, .stNumberInput input, .stTextArea textarea,
+      .stDateInput input, .stDownloadButton button,
+      .stAlert, .stAlert * {{
+        color: {text_on_white} !important;
       }}
 
-      /* ===== TEXTE ===== */
-      .stMarkdown, .markdown-text-container, p, li, span, label {{ color: {text_main} !important; }}
-      h1,h2,h3,h4,h5,h6 {{ color: {text_main} !important; }}
+      /* Pills des onglets (blanches) */
+      div[role="tablist"] > button[role="tab"] {{
+        background: #ffffff !important;
+        color: {text_on_white} !important;
+        border: 1px solid rgba(255,255,255,.25) !important;
+        border-radius: 999px !important;
+        font-weight: 600 !important;
+        padding: .45rem .9rem !important;
+        box-shadow: 0 1px 1px rgba(7,28,71,.06);
+        transition: color .15s, transform .12s, box-shadow .15s, border-color .15s;
+      }}
+      div[role="tablist"] > button[role="tab"]:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(7,28,71,.15);
+      }}
+      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
+        border-color: {brand_orange} !important;
+        box-shadow: 0 2px 6px rgba(247,148,29,.25);
+        font-weight: 700 !important;
+      }}
+      /* Soulignement orange sous les onglets */
+      div[data-baseweb="tab-highlight"],
+      div[role="tablist"] > div[aria-hidden="true"] {{
+        background: {brand_orange} !important;
+        height: 3px !important;
+        border-radius: 2px;
+      }}
 
-      /* ===== BOUTONS ===== */
+      /* -------- TAGS / PILLS (MultiSelect) -------- */
+      [data-baseweb="tag"] {{
+        background: #E9F4FF !important;
+        border: 1px solid rgba(12,61,145,.35) !important;
+        color: {text_on_white} !important;
+      }}
+      [data-baseweb="tag"] * {{ color: {text_on_white} !important; }}
+
+      /* -------- BOUTONS -------- */
       .stButton>button {{
         background: {brand_orange};
-        color: #fff;
+        color: #fff !important;
         border: 0;
         border-radius: 10px;
         padding: .55rem 1rem;
@@ -70,65 +94,21 @@ def inject_brand_css():
       }}
       .stButton>button:hover {{ background: #FFA23A; }}
 
-      /* ===== ONGLETS (tuiles blanches + underline orange) ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{
-        gap: 12px !important;
-        border-bottom: none !important;
-        padding-bottom: 6px;
-      }}
-      div[data-baseweb="tab-list"] button,
-      div[role="tablist"] > button[role="tab"] {{
-        background: #ffffff !important;
-        border: 1px solid rgba(12,61,145,.18) !important;
-        color: #0E2A5A !important;
-        padding: .45rem .9rem !important;
-        border-radius: 999px !important;
-        box-shadow: 0 1px 1px rgba(7,28,71,.06);
-        transition: color .15s, transform .12s, box-shadow .15s, border-color .15s;
-        font-weight: 600 !important;
-      }}
-      div[data-baseweb="tab-list"] button:hover,
-      div[role="tablist"] > button[role="tab"]:hover {{
-        transform: translateY(-1px);
-        border-color: rgba(12,61,145,.35) !important;
-        box-shadow: 0 2px 6px rgba(7,28,71,.10);
-      }}
-      div[data-baseweb="tab-list"] button[aria-selected="true"],
-      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-        color: {text_main} !important;
-        border: 1px solid {brand_orange} !important;
-        box-shadow: 0 2px 6px rgba(247,148,29,.25);
-        font-weight: 700 !important;
-      }}
-      div[data-baseweb="tab-highlight"],
-      div[role="tablist"] > div[aria-hidden="true"] {{
-        background: {brand_orange} !important;   /* underline orange */
-        height: 3px !important;
-        border-radius: 2px;
-      }}
-
-      /* ===== TAGS / PILLS (sélections dans les Select) — plus clairs ===== */
-      [data-baseweb="tag"] {{
-        background: #E9F4FF !important;          /* bleu pastel */
-        color: {text_main} !important;            /* texte foncé lisible */
-        border: 1px solid rgba(12,61,145,.35) !important;
-      }}
-      /* force la couleur du texte à l’intérieur du tag */
-      [data-baseweb="tag"] * {{ color: {text_main} !important; }}
-      /* croix/icônes en bleu marque */
-      [data-baseweb="tag"] [data-baseweb="icon"] svg,
-      [data-baseweb="tag"] svg {{ fill: {brand_blue} !important; }}
-
-      /* ===== BLOC INFO TEMPORAIRES — en ROUGE ===== */
+      /* -------- BLOC INFO (rouge pour “aucun temporaire…”) -------- */
       .temp-info {{
-        color: #8A1C1C !important;                            /* texte rouge sombre */
-        background: rgba(220,53,69,.08);                      /* fond rouge clair */
-        border: 1px solid rgba(220,53,69,.45);                /* bord rouge */
+        color: #FFE5E5 !important;
+        background: rgba(220,53,69,.18);
+        border: 1px solid rgba(220,53,69,.55);
         border-radius: 10px;
         padding: .75rem 1rem;
-        line-height: 1.4;
       }}
-      .temp-info b, .temp-info strong {{ color:#8A1C1C !important; }}
+
+      /* -------- Sidebar blanche (lisible) -------- */
+      [data-testid="stSidebar"] {{
+        background: #FFFFFF;
+        border-right: 4px solid #0C3D91;
+        color: {text_on_white};
+      }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -1298,6 +1278,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
