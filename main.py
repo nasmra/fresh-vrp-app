@@ -399,7 +399,6 @@ if LOGO_PATH.exists():
     st.sidebar.image(str(LOGO_PATH), width=220)
 else:
     st.sidebar.warning("Logo introuvable (assets/company_logo.png)")
-st.sidebar.image(logo_path, width=300)
 st.sidebar.header("📂 Données")
 
 def _all_loaded():
@@ -1166,6 +1165,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
