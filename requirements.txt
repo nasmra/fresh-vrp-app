@@ -1,15 +1,11 @@
-streamlit==1.36.0
-pandas==2.2.2
-numpy==1.26.4
-openpyxl==3.1.5
+streamlit
+pandas
+openpyxl
+numpy
+ortools
+folium
+streamlit-folium
 
-# Optimisation
-ortools==9.8.3296
-
-# PDF / carto
-reportlab==4.2.2
-folium==0.16.0
-streamlit-folium==0.21.1
 
 # Google Drive API
 google-api-python-client==2.138.0
@@ -17,3 +13,4 @@ google-auth==2.33.0
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.1
 httplib2==0.22.0
+
