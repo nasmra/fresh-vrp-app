@@ -8,9 +8,7 @@ import streamlit as st
 
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
-    """Retourne le logo encodé en base64.
-    Cherche à plusieurs emplacements (relatif & absolu) pour être robuste en prod/local.
-    """
+    """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
     candidates = [
         Path(path),
         Path.cwd() / path,
@@ -57,10 +55,8 @@ def inject_brand_css():
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Onglets (pills blanches, texte noir) ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{
-        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
-      }}
+      /* ===== Onglets ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
       div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
         background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
         border-radius:999px !important; padding:.45rem .9rem !important;
@@ -74,19 +70,14 @@ def inject_brand_css():
         background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
-      /* ===== SELECTS : texte NOIR (contrôle + menu) ===== */
-      .stApp div[data-baseweb="select"],
-      .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
+      /* ===== SELECTS : texte NOIR ===== */
+      .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
       .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
-
       body [data-baseweb="layer"] [role="listbox"],
       body [data-baseweb="popover"] [role="listbox"] {{
-        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important;
-        box-shadow:0 8px 24px rgba(7,28,71,.18);
+        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important; box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
-      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{
-        color:#111 !important; fill:#111 !important; opacity:1 !important;
-      }}
+      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
       body [role="listbox"] [role="option"]:hover, body [role="listbox"] [role="option"]:hover * {{
         background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
       }}
@@ -99,53 +90,48 @@ def inject_brand_css():
       [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
-
-      /* Chips ROUGES pour les champs .unavail */
-      .unavail [data-baseweb="tag"] {{
-        background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important;
-      }}
+      .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Notice blanche bord rouge (lisible) ===== */
-      .notice-white-red {{
-        background:#fff !important; border:2px solid rgba(220,53,69,.60) !important;
-        border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important;
-        box-shadow:0 6px 18px rgba(7,28,71,.10);
-      }}
+      /* ===== Alert custom lisible sur fond bleu ===== */
+      .notice-white-red {{ background:#fff !important; border:2px solid rgba(220,53,69,.60) !important; border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10); }}
 
-      /* ===== Boutons généraux ===== */
-      .stButton>button {{
-        background:{brand_orange}; color:#fff; border:0; border-radius:10px;
-        padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
-      }}
+      /* ===== Boutons ===== */
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
       .stButton>button:hover {{ background:#FFA23A; }}
-
-      /* ===== Boutons de FORMULAIRE (login, submit de forms) ===== */
       .stApp [data-testid="stFormSubmitButton"] button,
       .stApp [data-testid="stForm"] button,
       .stApp form button,
       .stApp button[kind][data-testid^="baseButton"] {{
-        background:{brand_orange} !important; color:#fff !important;
-        border:0 !important; border-radius:10px !important;
+        background:{brand_orange} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
         padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
       }}
       .stApp [data-testid="stFormSubmitButton"] button:hover,
       .stApp [data-testid="stForm"] button:hover,
       .stApp form button:hover,
-      .stApp button[kind][data-testid^="baseButton"]:hover {{
-        background:#FFA23A !important;
+      .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
+
+      /* ===== HERO & TITRE (CE QUI T'INTÉRESSE) ===== */
+      .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
+      .welcome-card {{
+        background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
+        box-shadow:0 10px 24px rgba(0,0,0,.18);
+        max-width:880px; width:min(92vw,880px); text-align:center;
       }}
+      .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
+      .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
+
+      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
     </style>
     """, unsafe_allow_html=True)
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
-    """Multiselect enveloppé pour afficher des chips rouges (indisponibilités)."""
+    """Multiselect avec chips rouges pour indisponibilités."""
     st.markdown('<div class="unavail">', unsafe_allow_html=True)
     value = st.multiselect(label, options, key=key, **kwargs)
     st.markdown('</div>', unsafe_allow_html=True)
     return value
-
 
 
 
@@ -639,6 +625,7 @@ with tab_opt:
 
                         if not same_veh_temps:
                             st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
+                            
                             continue
 
                         options = ["— Aucun —"] + same_veh_temps
@@ -657,10 +644,10 @@ with tab_opt:
                         value=False
                     )
                 else:
-                    st.markdown(
-    "<div class='notice-white-red'>Aucun chauffeur temporaire dans la liste.</div>",
-    unsafe_allow_html=True
-)
+                    st.markdown("<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
+            unsafe_allow_html=True)
+
+       
 
         finally:
             chauff_file.seek(0)
@@ -1320,6 +1307,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
