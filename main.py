@@ -39,14 +39,21 @@ def inject_brand_css():
       }}
       {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }' if logo_b64 else ''}
 
-      /* ===== Texte global (sur fond bleu) =====
-         (⚠️ NE PAS inclure 'span' ici, sinon ça casse la couleur des Select) */
-      .stMarkdown, .markdown-text-container, p, li, label {{ color: {light_text} !important; }}
-      h1,h2,h3,h4,h5,h6 {{ color: {light_text} !important; }}
+      /* ===== Texte global sur fond bleu
+         ⚠️ On SCINDE la règle : on ne cible que les blocs markdown,
+         pas les <li> des menus déroulants. ===== */
+      .stApp .markdown-text-container,
+      .stApp .stMarkdown {{ color: {light_text} !important; }}
+      .stApp .markdown-text-container p,
+      .stApp .markdown-text-container li,
+      .stApp .stMarkdown p,
+      .stApp .stMarkdown li,
+      .stApp .markdown-text-container label,
+      .stApp .stMarkdown label {{ color: {light_text} !important; }}
 
       /* ===== Boutons ===== */
       .stButton>button {{
-        background: #F7941D;
+        background: {brand_orange};
         color: #fff;
         border: 0;
         border-radius: 10px;
@@ -74,38 +81,32 @@ def inject_brand_css():
       div[data-baseweb="tab-list"] button[aria-selected="true"],
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
         color:#000 !important;
-        border:1px solid #F7941D !important;
+        border:1px solid {brand_orange} !important;
         box-shadow:0 2px 6px rgba(247,148,29,.25);
         font-weight:700 !important;
       }}
       div[data-baseweb="tab-highlight"],
       div[role="tablist"] > div[aria-hidden="true"] {{
-        background:#F7941D !important; height:3px !important; border-radius:2px;
+        background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
       /* ==========================================================
          SELECTS / MULTISELECTS
-         ----------------------------------------------------------
-         - Texte NOIR dans la zone fermée (valeur/placeholder/chips)
+         - Zone fermée : noir
          - Menu déroulant (portal) : noir par défaut, rouge si sélectionné
          ========================================================== */
 
-      /* Zone fermée (contrôle) : forcer le NOIR partout */
-      .stApp .stSelectbox [data-baseweb="select"],
-      .stApp .stMultiSelect [data-baseweb="select"],
+      /* Zone fermée (contrôle) : forcer le NOIR */
       .stApp [data-baseweb="select"],
       .stApp [data-baseweb="select"] * {{
-        color:#111 !important;
-        fill:#111 !important;
+        color:#111 !important; fill:#111 !important;
       }}
-
-      /* Placeholder en gris foncé (lisible) */
       .stApp [data-baseweb="select"] input::placeholder,
       .stApp [data-baseweb="select"] [class*="placeholder"] {{
         color:rgba(0,0,0,.55) !important;
       }}
 
-      /* Chips/tags (multi) par défaut : bleu pastel + texte foncé */
+      /* Chips (multi) par défaut */
       [data-baseweb="tag"] {{
         background:#E9F4FF !important;
         border:1px solid rgba(12,61,145,.35) !important;
@@ -113,41 +114,47 @@ def inject_brand_css():
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
-      /* Menu déroulant (portal) : container */
-      div[data-baseweb="layer"] [role="listbox"],
-      div[data-baseweb="popover"] [role="listbox"] {{
+      /* ====== PORTAIL/LAYER DES MENUS (en dehors de .stApp parfois) ====== */
+      body [data-baseweb="layer"] [role="listbox"],
+      body [data-baseweb="popover"] [role="listbox"],
+      body [data-baseweb="menu"] {{
         background:#FFFFFF !important;
         border:1px solid rgba(12,61,145,.35) !important;
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
 
-      /* AVANT sélection : texte NOIR */
-      [role="listbox"] [role="option"],
-      [role="listbox"] [role="option"] * {{
+      /* Texte NOIR partout dans la liste AVANT sélection */
+      body [data-baseweb="layer"] [role="option"],
+      body [data-baseweb="layer"] [role="option"] *,
+      body [data-baseweb="popover"] [role="option"],
+      body [data-baseweb="popover"] [role="option"] *,
+      body [data-baseweb="menu"] [data-baseweb="menu-item"],
+      body [data-baseweb="menu"] [data-baseweb="menu-item"] * {{
         color:#111 !important; fill:#111 !important; opacity:1 !important;
       }}
 
-      /* Survol : fond gris clair, texte noir */
-      [role="listbox"] [role="option"]:hover {{
+      /* Survol : gris clair + texte noir */
+      body [role="listbox"] [role="option"]:hover,
+      body [data-baseweb="menu"] [data-baseweb="menu-item"]:hover {{
         background:#F3F6FB !important; color:#111 !important;
       }}
-      [role="listbox"] [role="option"]:hover * {{
+      body [role="listbox"] [role="option"]:hover *,
+      body [data-baseweb="menu"] [data-baseweb="menu-item"]:hover * {{
         color:#111 !important; fill:#111 !important;
       }}
 
-      /* APRÈS sélection : texte ROUGE + fond rouge très clair */
-      [role="listbox"] [role="option"][aria-selected="true"],
-      [role="listbox"] [role="option"][aria-selected="true"] * {{
+      /* APRÈS sélection : ROUGE doux */
+      body [role="listbox"] [role="option"][aria-selected="true"],
+      body [data-baseweb="menu"] [data-baseweb="menu-item"][aria-selected="true"] {{
         background:#FFE8E8 !important;
         color:#B21F2D !important;
-        fill:#B21F2D !important;
       }}
-      [role="listbox"] [role="option"][aria-selected="true"]:hover {{
-        background:#FFD9D9 !important;
-        color:#B21F2D !important;
+      body [role="listbox"] [role="option"][aria-selected="true"] *,
+      body [data-baseweb="menu"] [data-baseweb="menu-item"][aria-selected="true"] * {{
+        color:#B21F2D !important; fill:#B21F2D !important;
       }}
 
-      /* Variante ROUGE pour des champs spécifiques (envelopper dans .unavail) */
+      /* Variante ROUGE pour champs enveloppés dans .unavail (tags) */
       .unavail [data-baseweb="tag"] {{
         background: rgba(220,53,69,.12) !important;
         border: 1px solid rgba(220,53,69,.55) !important;
@@ -1335,6 +1342,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
