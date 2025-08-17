@@ -3,10 +3,6 @@ import streamlit as st
 from pathlib import Path
 
 import base64
-import streamlit as st
-
-
-import base64
 from pathlib import Path
 import streamlit as st
 
@@ -98,29 +94,53 @@ def inject_brand_css():
         background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
-      /* ===== Menus de sélection : fond blanc + texte foncé (lisible) ===== */
+      /* ==========================================================
+         MENUS de sélection (popover) : fond blanc + texte noir lisible
+         + états hover/selected + correction pour disabled
+         ========================================================== */
+      /* Conteneur du menu (toutes variantes) */
       .stApp div[data-baseweb="popover"] [data-baseweb="menu"],
-      .stApp div[data-baseweb="menu"] {{
+      .stApp div[data-baseweb="popover"] [role="listbox"] {{
         background:#FFFFFF !important;
-        color:{dark_text} !important;
         border:1px solid rgba(12,61,145,.35) !important;
+        box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
-      .stApp [data-baseweb="menu"] *,
-      .stApp [data-baseweb="menu"] svg {{
-        color:{dark_text} !important;
-        fill:{dark_text} !important;
+
+      /* Texte par défaut noir sur toutes les couches du menu */
+      .stApp div[data-baseweb="popover"] [data-baseweb="menu"] *,
+      .stApp div[data-baseweb="popover"] [role="listbox"] *,
+      .stApp div[data-baseweb="popover"] [data-baseweb="menu"] svg,
+      .stApp div[data-baseweb="popover"] [role="listbox"] svg {{
+        color:#111 !important;
+        fill:#111 !important;
+        opacity: 1 !important;            /* annule l’effet “pâle” */
       }}
-      .stApp [data-baseweb="menu"] div[role="option"]:hover {{
-        background:#F3F6FB !important; color:{dark_text} !important;
+
+      /* Lignes d’option */
+      .stApp div[data-baseweb="popover"] [role="option"] {{
+        color:#111 !important;
       }}
-      .stApp [data-baseweb="menu"] div[role="option"][aria-selected="true"] {{
-        background:rgba(247,148,29,.18) !important; color:{dark_text} !important;
+
+      /* Survol */
+      .stApp div[data-baseweb="popover"] [role="option"]:hover {{
+        background:#F3F6FB !important; color:#111 !important;
+      }}
+
+      /* Option sélectionnée dans la LISTE (rouge doux) */
+      .stApp div[data-baseweb="popover"] [role="option"][aria-selected="true"] {{
+        background:#FFE8E8 !important;
+        color:#B21F2D !important;
+      }}
+
+      /* Option “disabled” (forçons la lisibilité) */
+      .stApp div[data-baseweb="popover"] [role="option"][aria-disabled="true"] {{
+        color:#555 !important; opacity:1 !important;
       }}
 
       /* ===== Placeholder des selects ===== */
       .stApp [data-baseweb="select"] input::placeholder {{ color: rgba(11,31,68,.60) !important; }}
 
-      /* ===== Tags/pills par défaut (bleu pastel) ===== */
+      /* ===== TAGS par défaut (bleu pastel) ===== */
       [data-baseweb="tag"] {{
         background:#E9F4FF !important;
         border:1px solid rgba(12,61,145,.35) !important;
@@ -1330,6 +1350,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
