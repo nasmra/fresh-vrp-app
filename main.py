@@ -76,20 +76,60 @@ def inject_brand_css():
       .stButton>button:hover {{ background: #FFA23A; }}
 
       /* ================== ONGLET (Tabs) ================== */
-      div[data-baseweb="tab-list"] button {{
-        color: #0E2A5A !important;      /* non sélectionné */
-        font-weight: 600 !important;
-        opacity: .95;
-      }}
-      div[data-baseweb="tab-list"] button:hover {{
-        color: {text_main} !important;   /* hover plus foncé */
-      }}
-      div[data-baseweb="tab-list"] button[aria-selected="true"] {{
-        color: {text_main} !important;   /* sélectionné */
-        border-bottom: 3px solid {brand_orange} !important;
-        font-weight: 700 !important;
-        opacity: 1;
-      }}
+    # ================== ONGLET (Tabs) ==================
+    /* Conteneur des onglets (vieux & nouveau sélecteur) */
+    div[data-baseweb="tab-list"],
+    div[role="tablist"]{
+      gap: 18px !important;
+      border-bottom: 1px solid rgba(12,61,145,.25);
+      padding-bottom: 6px;
+    }
+
+    /* Boutons d’onglet (non sélectionnés) */
+    div[data-baseweb="tab-list"] button,
+    div[role="tablist"] > button[role="tab"]{
+      background: transparent !important;
+      border: none !important;
+      color: #0E2A5A !important;
+      font-weight: 600 !important;
+      transition: color .2s ease, transform .12s ease;
+      position: relative;
+    }
+
+    /* Hover */
+    div[data-baseweb="tab-list"] button:hover,
+    div[role="tablist"] > button[role="tab"]:hover{
+      color: #06214F !important;
+      transform: translateY(-1px);
+    }
+
+    /* Etat sélectionné */
+    div[data-baseweb="tab-list"] button[aria-selected="true"],
+    div[role="tablist"] > button[role="tab"][aria-selected="true"]{
+      color: #0B1F44 !important;
+      font-weight: 700 !important;
+    }
+
+    /* Soulignement orange animé pour l’onglet actif */
+    div[data-baseweb="tab-list"] button[aria-selected="true"]::after,
+    div[role="tablist"] > button[role="tab"][aria-selected="true"]::after{
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: -8px;
+      height: 3px;
+      background: linear-gradient(90deg, #F7941D 0%, #FFC66F 100%);
+      border-radius: 2px;
+      transform: scaleX(1);
+      transform-origin: left;
+      transition: transform .18s ease-out;
+    }
+
+    /* On masque le soulignement quand non sélectionné (propre si baseweb laisse un ::after) */
+    div[data-baseweb="tab-list"] button:not([aria-selected="true"])::after,
+    div[role="tablist"] > button[role="tab"]:not([aria-selected="true"])::after{
+      transform: scaleX(0);
+    }
+
 
       /* ================== TAGS / PILLS (MultiSelect) ================== */
       [data-baseweb="tag"] {{
@@ -1281,6 +1321,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
