@@ -95,45 +95,55 @@ def inject_brand_css():
       }}
 
       /* ==========================================================
-         MENUS de sélection (popover) : fond blanc + texte noir lisible
-         + états hover/selected + correction pour disabled
+         MENUS de sélection (les popovers sont rendus en "portal")
+         -> on cible AUSSI les éléments hors .stApp
          ========================================================== */
-      /* Conteneur du menu (toutes variantes) */
+
+      /* ---- Version portée par .stApp (utile en local) ---- */
       .stApp div[data-baseweb="popover"] [data-baseweb="menu"],
       .stApp div[data-baseweb="popover"] [role="listbox"] {{
         background:#FFFFFF !important;
         border:1px solid rgba(12,61,145,.35) !important;
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
-
-      /* Texte par défaut noir sur toutes les couches du menu */
       .stApp div[data-baseweb="popover"] [data-baseweb="menu"] *,
       .stApp div[data-baseweb="popover"] [role="listbox"] *,
       .stApp div[data-baseweb="popover"] [data-baseweb="menu"] svg,
       .stApp div[data-baseweb="popover"] [role="listbox"] svg {{
-        color:#111 !important;
-        fill:#111 !important;
-        opacity: 1 !important;            /* annule l’effet “pâle” */
+        color:#111 !important; fill:#111 !important; opacity:1 !important;
       }}
-
-      /* Lignes d’option */
-      .stApp div[data-baseweb="popover"] [role="option"] {{
-        color:#111 !important;
-      }}
-
-      /* Survol */
+      .stApp div[data-baseweb="popover"] [role="option"] {{ color:#111 !important; }}
       .stApp div[data-baseweb="popover"] [role="option"]:hover {{
         background:#F3F6FB !important; color:#111 !important;
       }}
-
-      /* Option sélectionnée dans la LISTE (rouge doux) */
       .stApp div[data-baseweb="popover"] [role="option"][aria-selected="true"] {{
-        background:#FFE8E8 !important;
-        color:#B21F2D !important;
+        background:#FFE8E8 !important; color:#B21F2D !important;
+      }}
+      .stApp div[data-baseweb="popover"] [role="option"][aria-disabled="true"] {{
+        color:#555 !important; opacity:1 !important;
       }}
 
-      /* Option “disabled” (forçons la lisibilité) */
-      .stApp div[data-baseweb="popover"] [role="option"][aria-disabled="true"] {{
+      /* ---- Version "portal" globale (production Streamlit Cloud) ---- */
+      div[data-baseweb="layer"] div[data-baseweb="menu"],
+      div[data-baseweb="layer"] [role="listbox"],
+      div[data-baseweb="popover"] div[data-baseweb="menu"],
+      div[data-baseweb="popover"] [role="listbox"],
+      [role="listbox"] {{
+        background:#FFFFFF !important;
+        color:#111 !important;
+        border:1px solid rgba(12,61,145,.35) !important;
+        box-shadow:0 8px 24px rgba(7,28,71,.18);
+      }}
+      [role="listbox"] *, [role="listbox"] svg {{
+        color:#111 !important; fill:#111 !important; opacity:1 !important;
+      }}
+      [role="option"]:hover {{
+        background:#F3F6FB !important; color:#111 !important;
+      }}
+      [role="option"][aria-selected="true"] {{
+        background:#FFE8E8 !important; color:#B21F2D !important;
+      }}
+      [role="option"][aria-disabled="true"] {{
         color:#555 !important; opacity:1 !important;
       }}
 
@@ -146,17 +156,15 @@ def inject_brand_css():
         border:1px solid rgba(12,61,145,.35) !important;
       }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
-      [data-baseweb="tag"] [data-baseweb="icon"] svg,
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
 
       /* ===== Variante ROUGE pour “indisponibles” (via wrapper .unavail) ===== */
       .unavail [data-baseweb="tag"] {{
-        background: rgba(220,53,69,.12) !important;     /* rouge clair */
+        background: rgba(220,53,69,.12) !important;
         border: 1px solid rgba(220,53,69,.55) !important;
       }}
-      .unavail [data-baseweb="tag"] *,
-      .unavail [data-baseweb="tag"] [data-baseweb="icon"] svg {{
-        color:#7a0c0c !important; fill:#7a0c0c !important;  /* texte + icônes rouges */
+      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{
+        color:#7a0c0c !important; fill:#7a0c0c !important;
       }}
 
       /* ===== Alertes / success : texte sombre lisible ===== */
@@ -186,11 +194,7 @@ def unavail_multiselect(label, options, key=None, **kwargs):
 
 
 inject_brand_css()
-vehicules = ["IVECO FK-233-XA", "MERCEDES FL-777-AA", "MERCEDES GF-953-FD"]
-chauffeurs = ["Chauffeur 1 : Sami", "Chauffeur 2 : Mehdi", "Chauffeur 3 : Loris"]
 
-veh_indispo = unavail_multiselect("Véhicules indisponibles", vehicules, key="veh_indispo")
-chf_indispo = unavail_multiselect("Chauffeurs indisponibles", chauffeurs, key="chf_indispo")
 # =================== Auth ===================
 def _logout():
     """Nettoie la session et relance l'app."""
@@ -631,25 +635,23 @@ with tab_opt:
         veh_file.seek(0)
         try:
             dfv = pd.read_excel(veh_file, skiprows=1)
-            unv_veh = st.multiselect(
+            unv_veh = unavail_multiselect(
                 "🚫 Véhicules indisponibles",
-                dfv["Véhicule"].dropna().astype(str).unique().tolist()
+                dfv["Véhicule"].dropna().astype(str).unique().tolist(),
+                key="veh_unavail"
             )
         finally:
             veh_file.seek(0)
 
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
+    # Chauffeurs indisponibles
     if chauff_file:
         chauff_file.seek(0)
         try:
             dfc = pd.read_excel(chauff_file, sheet_name="Liste")
-
-            # Nom complet + nettoyage
             dfc["Nom Complet"] = (dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")).str.strip()
-            dfc["Véhicule affecté"] = dfc["Véhicule affecté"].astype(str)
-
             all_ch = [n for n in dfc["Nom Complet"].tolist() if n]
-            unv_ch = st.multiselect("🚫 Chauffeurs indisponibles", all_ch)
+            unv_ch = unavail_multiselect("🚫 Chauffeurs indisponibles", all_ch, key="ch_unavail")
 
             # Préparation des remplaçants
             selected_replacements = {}
@@ -1354,6 +1356,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
