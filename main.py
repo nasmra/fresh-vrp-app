@@ -19,18 +19,16 @@ def _logo_b64(path: str) -> str:
 def inject_brand_css():
     brand_blue   = "#0C3D91"
     brand_orange = "#F7941D"
-    dark_text    = "#0B1F44"
     light_text   = "#FFFFFF"
-
+    dark_text    = "#0B1F44"
     bg = "#042B80"
     pattern_opacity = 0.012
-    panel_alpha = 0.0
 
     logo_b64 = _logo_b64("assets/company_logo.png")
 
     st.markdown(f"""
     <style>
-      /* ===== Fond général ===== */
+      /* ===== Fond ===== */
       .stApp {{
         background:
           radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
@@ -39,36 +37,32 @@ def inject_brand_css():
       }}
       {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }' if logo_b64 else ''}
 
-      /* ===== Texte global sur fond bleu
-         ⚠️ On SCINDE la règle : on ne cible que les blocs markdown,
-         pas les <li> des menus déroulants. ===== */
+      /* ===== Titres & contenu normal : BLANC ===== */
       .stApp .markdown-text-container,
-      .stApp .stMarkdown {{ color: {light_text} !important; }}
+      .stApp .stMarkdown {{ color:{light_text} !important; }}
+      .stApp .markdown-text-container h1,
+      .stApp .markdown-text-container h2,
+      .stApp .markdown-text-container h3,
+      .stApp .markdown-text-container h4,
+      .stApp .markdown-text-container h5,
+      .stApp .markdown-text-container h6,
+      .stApp .stMarkdown h1,
+      .stApp .stMarkdown h2,
+      .stApp .stMarkdown h3,
+      .stApp .stMarkdown h4,
+      .stApp .stMarkdown h5,
+      .stApp .stMarkdown h6,
       .stApp .markdown-text-container p,
       .stApp .markdown-text-container li,
       .stApp .stMarkdown p,
       .stApp .stMarkdown li,
       .stApp .markdown-text-container label,
-      .stApp .stMarkdown label {{ color: {light_text} !important; }}
+      .stApp .stMarkdown label {{ color:{light_text} !important; }}
 
-      /* ===== Boutons ===== */
-      .stButton>button {{
-        background: {brand_orange};
-        color: #fff;
-        border: 0;
-        border-radius: 10px;
-        padding: .55rem 1rem;
-        box-shadow: 0 3px 0 #d17f12;
-      }}
-      .stButton>button:hover {{ background: #FFA23A; }}
-
-      /* ===== Onglets (pills blanches + texte noir) ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{
-        gap:12px !important; border-bottom:none !important; padding-bottom:8px;
-      }}
+      /* ===== Onglets ===== */
       div[data-baseweb="tab-list"] button,
       div[role="tablist"] > button[role="tab"] {{
-        background:#FFFFFF !important;
+        background:#FFF !important;
         border:1px solid rgba(12,61,145,.18) !important;
         border-radius:999px !important;
         padding:.45rem .9rem !important;
@@ -76,96 +70,57 @@ def inject_brand_css():
         font-weight:600 !important;
         color:#000 !important;
       }}
-      div[data-baseweb="tab-list"] button *,
-      div[role="tablist"] > button[role="tab"] * {{ color:#000 !important; fill:#000 !important; }}
       div[data-baseweb="tab-list"] button[aria-selected="true"],
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-        color:#000 !important;
-        border:1px solid {brand_orange} !important;
+        border-color:{brand_orange} !important;
         box-shadow:0 2px 6px rgba(247,148,29,.25);
-        font-weight:700 !important;
-      }}
-      div[data-baseweb="tab-highlight"],
-      div[role="tablist"] > div[aria-hidden="true"] {{
-        background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
 
       /* ==========================================================
-         SELECTS / MULTISELECTS
-         - Zone fermée : noir
-         - Menu déroulant (portal) : noir par défaut, rouge si sélectionné
+         LISTES DÉROULANTES SEULEMENT (NOIR)
+         - zone fermée (contrôle)
+         - menu (portal/layer)
          ========================================================== */
 
-      /* Zone fermée (contrôle) : forcer le NOIR */
-      .stApp [data-baseweb="select"],
-      .stApp [data-baseweb="select"] * {{
+      /* Zone fermée du select/multiselect : NOIR */
+      .stApp .stSelectbox div[data-baseweb="select"],
+      .stApp .stSelectbox div[data-baseweb="select"] *,
+      .stApp .stMultiSelect div[data-baseweb="select"],
+      .stApp .stMultiSelect div[data-baseweb="select"] * {{
         color:#111 !important; fill:#111 !important;
       }}
-      .stApp [data-baseweb="select"] input::placeholder,
-      .stApp [data-baseweb="select"] [class*="placeholder"] {{
-        color:rgba(0,0,0,.55) !important;
-      }}
+      .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
 
-      /* Chips (multi) par défaut */
-      [data-baseweb="tag"] {{
-        background:#E9F4FF !important;
-        border:1px solid rgba(12,61,145,.35) !important;
-      }}
-      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
-      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
-
-      /* ====== PORTAIL/LAYER DES MENUS (en dehors de .stApp parfois) ====== */
+      /* Menu déroulant (portal) : NOIR par défaut */
       body [data-baseweb="layer"] [role="listbox"],
-      body [data-baseweb="popover"] [role="listbox"],
-      body [data-baseweb="menu"] {{
-        background:#FFFFFF !important;
+      body [data-baseweb="popover"] [role="listbox"] {{
+        background:#FFF !important;
         border:1px solid rgba(12,61,145,.35) !important;
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
-
-      /* Texte NOIR partout dans la liste AVANT sélection */
-      body [data-baseweb="layer"] [role="option"],
-      body [data-baseweb="layer"] [role="option"] *,
-      body [data-baseweb="popover"] [role="option"],
-      body [data-baseweb="popover"] [role="option"] *,
-      body [data-baseweb="menu"] [data-baseweb="menu-item"],
-      body [data-baseweb="menu"] [data-baseweb="menu-item"] * {{
+      body [role="listbox"] [role="option"],
+      body [role="listbox"] [role="option"] * {{
         color:#111 !important; fill:#111 !important; opacity:1 !important;
       }}
-
-      /* Survol : gris clair + texte noir */
       body [role="listbox"] [role="option"]:hover,
-      body [data-baseweb="menu"] [data-baseweb="menu-item"]:hover {{
-        background:#F3F6FB !important; color:#111 !important;
+      body [role="listbox"] [role="option"]:hover * {{
+        background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
       }}
-      body [role="listbox"] [role="option"]:hover *,
-      body [data-baseweb="menu"] [data-baseweb="menu-item"]:hover * {{
-        color:#111 !important; fill:#111 !important;
+      /* Option sélectionnée : ROUGE doux */
+      body [role="listbox"] [role="option"][aria-selected="true"] {{
+        background:#FFE8E8 !important; color:#B21F2D !important;
       }}
-
-      /* APRÈS sélection : ROUGE doux */
-      body [role="listbox"] [role="option"][aria-selected="true"],
-      body [data-baseweb="menu"] [data-baseweb="menu-item"][aria-selected="true"] {{
-        background:#FFE8E8 !important;
-        color:#B21F2D !important;
-      }}
-      body [role="listbox"] [role="option"][aria-selected="true"] *,
-      body [data-baseweb="menu"] [data-baseweb="menu-item"][aria-selected="true"] * {{
+      body [role="listbox"] [role="option"][aria-selected="true"] * {{
         color:#B21F2D !important; fill:#B21F2D !important;
       }}
 
-      /* Variante ROUGE pour champs enveloppés dans .unavail (tags) */
-      .unavail [data-baseweb="tag"] {{
-        background: rgba(220,53,69,.12) !important;
-        border: 1px solid rgba(220,53,69,.55) !important;
-      }}
-      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{
-        color:#7a0c0c !important; fill:#7a0c0c !important;
-      }}
+      /* Tags (chips) */
+      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
+      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
 
-      /* Alertes lisibles */
-      div[data-testid="stAlert"], div[role="alert"], div[data-testid="stNotification"] {{ color:{dark_text} !important; }}
-      div[data-testid="stAlert"] * , div[role="alert"] * , div[data-testid="stNotification"] * {{ color:{dark_text} !important; }}
+      /* Boutons */
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button:hover {{ background:#FFA23A; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -1342,6 +1297,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
