@@ -37,32 +37,29 @@ def inject_brand_css():
       }}
       {'.stApp::before { content:""; position:fixed; inset:0; background:url("data:image/png;base64,'+logo_b64+'") no-repeat 24px 24px; background-size:140px; opacity:.05; pointer-events:none; }' if logo_b64 else ''}
 
-      /* ===== Titres & contenu normal : BLANC ===== */
-      .stApp .markdown-text-container,
-      .stApp .stMarkdown {{ color:{light_text} !important; }}
-      .stApp .markdown-text-container h1,
-      .stApp .markdown-text-container h2,
-      .stApp .markdown-text-container h3,
-      .stApp .markdown-text-container h4,
-      .stApp .markdown-text-container h5,
-      .stApp .markdown-text-container h6,
-      .stApp .stMarkdown h1,
-      .stApp .stMarkdown h2,
-      .stApp .stMarkdown h3,
-      .stApp .stMarkdown h4,
-      .stApp .stMarkdown h5,
-      .stApp .stMarkdown h6,
-      .stApp .markdown-text-container p,
-      .stApp .markdown-text-container li,
-      .stApp .stMarkdown p,
-      .stApp .stMarkdown li,
-      .stApp .markdown-text-container label,
-      .stApp .stMarkdown label {{ color:{light_text} !important; }}
+      /* ===== Titres & textes généraux : BLANC ===== */
+      .stApp .stMarkdown,
+      .stApp .markdown-text-container {{ color:{light_text} !important; }}
+      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
+      .stApp .stMarkdown h1, .stApp .stMarkdown h2, .stApp .stMarkdown h3,
+      .stApp .stMarkdown h4, .stApp .stMarkdown h5, .stApp .stMarkdown h6 {{ color:{light_text} !important; }}
+      /* Tous les labels de widgets en BLANC (selects, inputs, sliders, etc.) */
+      .stApp .stSelectbox > label,
+      .stApp .stMultiSelect > label,
+      .stApp .stTextInput > label,
+      .stApp .stNumberInput > label,
+      .stApp .stDateInput > label,
+      .stApp .stTextArea > label,
+      .stApp .stSlider > label,
+      .stApp .stRadio > label,
+      .stApp .stCheckbox > label,
+      .stApp label {{ color:{light_text} !important; }}
 
       /* ===== Onglets ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
       div[data-baseweb="tab-list"] button,
       div[role="tablist"] > button[role="tab"] {{
-        background:#FFF !important;
+        background:#FFFFFF !important;
         border:1px solid rgba(12,61,145,.18) !important;
         border-radius:999px !important;
         padding:.45rem .9rem !important;
@@ -77,21 +74,14 @@ def inject_brand_css():
       }}
 
       /* ==========================================================
-         LISTES DÉROULANTES SEULEMENT (NOIR)
-         - zone fermée (contrôle)
-         - menu (portal/layer)
+         LISTES DÉROULANTES — texte NOIR (zone + menu)
          ========================================================== */
-
-      /* Zone fermée du select/multiselect : NOIR */
-      .stApp .stSelectbox div[data-baseweb="select"],
-      .stApp .stSelectbox div[data-baseweb="select"] *,
-      .stApp .stMultiSelect div[data-baseweb="select"],
-      .stApp .stMultiSelect div[data-baseweb="select"] * {{
-        color:#111 !important; fill:#111 !important;
-      }}
+      /* Zone fermée du select/multiselect */
+      .stApp div[data-baseweb="select"],
+      .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
       .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
 
-      /* Menu déroulant (portal) : NOIR par défaut */
+      /* Menu déroulant (portal/layer) */
       body [data-baseweb="layer"] [role="listbox"],
       body [data-baseweb="popover"] [role="listbox"] {{
         background:#FFF !important;
@@ -99,22 +89,13 @@ def inject_brand_css():
         box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
       body [role="listbox"] [role="option"],
-      body [role="listbox"] [role="option"] * {{
-        color:#111 !important; fill:#111 !important; opacity:1 !important;
-      }}
+      body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
       body [role="listbox"] [role="option"]:hover,
-      body [role="listbox"] [role="option"]:hover * {{
-        background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
-      }}
-      /* Option sélectionnée : ROUGE doux */
-      body [role="listbox"] [role="option"][aria-selected="true"] {{
-        background:#FFE8E8 !important; color:#B21F2D !important;
-      }}
-      body [role="listbox"] [role="option"][aria-selected="true"] * {{
-        color:#B21F2D !important; fill:#B21F2D !important;
-      }}
+      body [role="listbox"] [role="option"]:hover * {{ background:#F3F6FB !important; color:#111 !important; fill:#111 !important; }}
+      body [role="listbox"] [role="option"][aria-selected="true"],
+      body [role="listbox"] [role="option"][aria-selected="true"] * {{ background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important; }}
 
-      /* Tags (chips) */
+      /* Tags (chips) par défaut */
       [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
 
@@ -1297,6 +1278,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
