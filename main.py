@@ -6,6 +6,11 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+def alert_white_red(msg: str):
+    st.markdown(
+        f"<div class='notice-white-red'>{msg}</div>",
+        unsafe_allow_html=True
+    )
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
@@ -23,7 +28,6 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
         except Exception:
             pass
     return ""
-
 
 def inject_brand_css():
     brand_blue   = "#0C3D91"
@@ -55,22 +59,7 @@ def inject_brand_css():
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Onglets ===== */
-      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
-      div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
-        background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
-        border-radius:999px !important; padding:.45rem .9rem !important;
-        box-shadow:0 1px 1px rgba(7,28,71,.06); font-weight:600 !important; color:#000 !important;
-      }}
-      div[data-baseweb="tab-list"] button[aria-selected="true"],
-      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
-        border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25);
-      }}
-      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{
-        background:{brand_orange} !important; height:3px !important; border-radius:2px;
-      }}
-
-      /* ===== SELECTS : texte NOIR ===== */
+      /* ===== Sélecteurs ===== */
       .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
       .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
       body [data-baseweb="layer"] [role="listbox"],
@@ -86,16 +75,24 @@ def inject_brand_css():
         background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
       }}
 
-      /* ===== Chips ===== */
+      /* ===== Chips indisponibilités ===== */
       [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
       .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Alert custom lisible sur fond bleu ===== */
-      .notice-white-red {{ background:#fff !important; border:2px solid rgba(220,53,69,.60) !important; border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10); }}
-      /* ===== Boutons ===== */
+      /* ===== Boutons / Onglets ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
+      div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
+        border-radius:999px !important; padding:.45rem .9rem !important;
+        box-shadow:0 1px 1px rgba(7,28,71,.06); font-weight:600 !important; color:#000 !important;
+      }}
+      div[data-baseweb="tab-list"] button[aria-selected="true"],
+      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{ border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25); }}
+      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{ background:{brand_orange} !important; height:3px !important; border-radius:2px; }}
+
       .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
       .stButton>button:hover {{ background:#FFA23A; }}
       .stApp [data-testid="stFormSubmitButton"] button,
@@ -110,7 +107,7 @@ def inject_brand_css():
       .stApp form button:hover,
       .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
 
-      /* ===== HERO & TITRE (CE QUI T'INTÉRESSE) ===== */
+      /* ===== HÉRO & TITRE ===== */
       .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
       .welcome-card {{
         background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
@@ -119,10 +116,37 @@ def inject_brand_css():
       }}
       .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
-
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
+
+      /* ===== Cartes d’alerte Streamlit : neutralise le FOND BLEU ===== */
+      .stApp .stAlert {{
+        background:#fff !important;
+        border:1px solid rgba(12,61,145,.25) !important;
+        border-radius:10px !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.08);
+        color:{dark_text} !important;
+      }}
+      .stApp .stAlert * {{ color:{dark_text} !important; }}
+      .stApp .stAlert.stInfo    {{ border-left:6px solid #0ea5e9 !important; }}
+      .stApp .stAlert.stSuccess {{ border-left:6px solid #10b981 !important; }}
+      .stApp .stAlert.stWarning {{ border-left:6px solid #f59e0b !important; }}
+      .stApp .stAlert.stError   {{ border-left:6px solid #ef4444 !important; }}
+
+      /* ===== Alerte perso : FOND BLANC + TEXTE ROUGE (anti-héritage) ===== */
+      .notice-white-red {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px; padding:.75rem 1rem;
+        color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10);
+      }}
+      /* Sur-spécifie pour battre .stMarkdown color:white */
+      .stApp .stMarkdown .notice-white-red,
+      .stApp .markdown-text-container .notice-white-red,
+      .stApp .stMarkdown .notice-white-red *,
+      .stApp .markdown-text-container .notice-white-red * {{ color:#7a0c0c !important; }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
@@ -1328,6 +1352,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
