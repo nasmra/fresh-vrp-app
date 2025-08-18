@@ -24,7 +24,6 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
             pass
     return ""
 
-
 def inject_brand_css():
     brand_blue   = "#0C3D91"
     brand_orange = "#F7941D"
@@ -46,13 +45,11 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres/labels lisibles sur fond sombre (OK) ===== */
+      /* ===== Titres & labels lisibles sur fond sombre ===== */
       .stApp h1,.stApp h2,.stApp h3,.stApp h4,.stApp h5,.stApp h6,
       .stApp label {{ color:{light_text} !important; }}
 
-      /* !!! NE PLUS FORCER tout le markdown en blanc (c'était la source des conflits) !!! */
-
-      /* ===== Zones à fond clair => texte noir (dé-priorise le bleu) ===== */
+      /* ===== Zones à fond clair => texte noir ===== */
       .stApp .stAlert, .stApp .stDataFrame, .stApp .stTable,
       .stApp .stTextInput, .stApp .stTextArea, .stApp .stNumberInput,
       .stApp [data-baseweb="select"], .stApp [role="listbox"],
@@ -63,7 +60,7 @@ def inject_brand_css():
         color:#111 !important; background:#fff !important;
       }}
 
-      /* ===== Re-thème des alertes Streamlit (fini le fond bleu) ===== */
+      /* ===== Re-thème des alertes Streamlit ===== */
       .stApp .stAlert {{
         background:#fff !important;
         border:1px solid rgba(12,61,145,.25) !important;
@@ -73,13 +70,23 @@ def inject_brand_css():
         box-shadow:0 6px 18px rgba(7,28,71,.08);
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
-      /* Variantes « best effort » si classes présentes */
       .stApp .stSuccess {{ border-left-color:#10b981 !important; }}
       .stApp .stWarning {{ border-left-color:#f59e0b !important; }}
       .stApp .stInfo    {{ border-left-color:#0ea5e9 !important; }}
       .stApp .stError   {{ border-left-color:#ef4444 !important; }}
 
-      /* ===== Selects & popovers en noir ===== */
+      /* ===== Alerte personnalisée fond blanc + texte rouge ===== */
+      .notice-white-red {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px;
+        padding:.75rem 1rem;
+        color:#7a0c0c !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.10);
+      }}
+      .notice-white-red * {{ color:#7a0c0c !important; }}
+
+      /* ===== Selects & popovers ===== */
       .stApp [data-baseweb="select"], .stApp [data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
       body [data-baseweb="layer"] [role="listbox"],
       body [data-baseweb="popover"] [role="listbox"] {{
@@ -109,7 +116,9 @@ def inject_brand_css():
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
         border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25);
       }}
-      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button {{
+        background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
+      }}
       .stButton>button:hover {{ background:#FFA23A; }}
 
       /* ===== Hero / titre ===== */
@@ -124,7 +133,6 @@ def inject_brand_css():
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); color:{light_text} !important; }}
     </style>
     """, unsafe_allow_html=True)
-
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
@@ -1335,6 +1343,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
