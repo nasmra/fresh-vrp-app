@@ -612,6 +612,10 @@ with tab_opt:
             )
         finally:
             veh_file.seek(0)
+            
+def _alert_white_red(msg: str):
+    # Fond blanc + texte rouge, styles déjà définis dans .notice-white-red
+    st.markdown(f"<div class='notice-white-red'>{msg}</div>", unsafe_allow_html=True)
 
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     # Chauffeurs indisponibles
@@ -640,7 +644,8 @@ with tab_opt:
                         veh = veh_by_name.get(ch, "")
                         # Si le véhicule du titulaire est indisponible → pas de proposition
                         if veh in (unv_veh or []):
-                            st.info(f"• **{ch}** → véhicule **{veh}** indisponible : pas de remplaçant proposé.")
+                            _alert_white_red(f"• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.")
+
                             continue
 
                         # Temporaires STRICTEMENT sur le même véhicule
@@ -648,8 +653,8 @@ with tab_opt:
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
 
                         if not same_veh_temps:
-                            st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
-                            
+                            _alert_white_red(f"• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.")
+
                             continue
 
                         options = ["— Aucun —"] + same_veh_temps
@@ -1330,5 +1335,6 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
