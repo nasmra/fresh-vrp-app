@@ -76,15 +76,20 @@ def inject_brand_css():
       .stApp .stError   {{ border-left-color:#ef4444 !important; }}
 
       /* ===== Alerte personnalisée fond blanc + texte rouge ===== */
-      .notice-white-red {{
-        background:#fff !important;
-        border:2px solid rgba(220,53,69,.60) !important;
-        border-radius:10px;
-        padding:.75rem 1rem;
-        color:#7a0c0c !important;
-        box-shadow:0 6px 18px rgba(7,28,71,.10);
-      }}
-      .notice-white-red * {{ color:#7a0c0c !important; }}
+    /* ===== Alerte personnalisée fond blanc + texte rouge (AMÉLIORÉ) ===== */
+    .notice-white-red {
+        background-color: #ffffff !important; /* Fond blanc explicite */
+        border: 1px solid #dc3545 !important;   /* Bordure rouge subtile */
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;                  /* Espace sous l'alerte */
+        color: #7a0c0c !important;             /* Couleur du texte rouge foncé */
+        box-shadow: 0 4px 12px rgba(7,28,71,.12);
+    }
+    /* Assure que TOUT le texte à l'intérieur (y compris les balises <b>) soit rouge */
+    .notice-white-red * {
+        color: inherit !important;
+    }
 
       /* ===== Selects & popovers ===== */
       .stApp [data-baseweb="select"], .stApp [data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
@@ -652,7 +657,7 @@ def _alert_white_red(msg: str):
                         veh = veh_by_name.get(ch, "")
                         # Si le véhicule du titulaire est indisponible → pas de proposition
                         if veh in (unv_veh or []):
-                            _alert_white_red(f"• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.")
+                            _alert_white_red(f"• {ch} → véhicule {veh} indisponible : pas de remplaçant proposé.")
 
                             continue
 
@@ -661,8 +666,7 @@ def _alert_white_red(msg: str):
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
 
                         if not same_veh_temps:
-                            _alert_white_red(f"• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.")
-
+                            _alert_white-red(f"• {ch} → aucun temporaire disponible sur le véhicule {veh}.")
                             continue
 
                         options = ["— Aucun —"] + same_veh_temps
@@ -1343,6 +1347,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
