@@ -679,17 +679,17 @@ with tab_opt:
             else:
                 # Construire la liste finale des chauffeurs à exclure
                 unv_ch_final = list(unv_ch)
-
-                # Option : n'autoriser que les temporaires explicitement choisis
-                if dfc is not None and "Statut" in dfc.columns and restrict_to_selected:
+                
+                # AUTO : si au moins un remplaçant est choisi, exclure tous les autres temporaires
+                if dfc is not None and "Statut" in dfc.columns and len(selected_replacements) > 0:
                     temp_all = set(
                         dfc.loc[dfc["Statut"].astype(str).str.lower().str.contains("temp"),
                                 "Nom Complet"].tolist()
                     )
                     keep = set(selected_replacements.values())
-                    # Tous les temporaires non sélectionnés deviennent "indisponibles"
                     extra_unavailable = list(temp_all - keep)
                     unv_ch_final.extend(extra_unavailable)
+
 
                 # Petit résumé des remplacements
                 if selected_replacements:
@@ -1329,6 +1329,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
