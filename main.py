@@ -99,13 +99,20 @@ def inject_brand_css():
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
       /* ===== Bloc notice blanc / contour rouge ===== */
-      .notice-white-red {{
-        background:#fff !important;
-        border:2px solid rgba(220,53,69,.60) !important;
-        border-radius:10px; padding:.75rem 1rem;
-        box-shadow:0 6px 18px rgba(7,28,71,.10);
-        color:#B21F2D !important; /* couleur primaire du bloc */
-      }}
+
+
+    .notice-white-red {
+      background:#fff !important;
+      border:2px solid rgba(220,53,69,.60) !important;
+      border-radius:10px; padding:.75rem 1rem;
+      color:#B21F2D !important;
+      box-shadow:0 6px 18px rgba(7,28,71,.10);
+    }
+    .notice-white-red * {
+      color:#B21F2D !important;
+    }
+
+      
       /* 🚨 Override absolu : rouge pour tout le contenu de la notice, 
          peu importe les héritages de couleur globaux */
       .notice-white-red, .notice-white-red * {{
@@ -1360,6 +1367,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
