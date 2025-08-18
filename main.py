@@ -54,7 +54,7 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
 
 
 def inject_brand_css():
-    brand_blue   = "#0C3D91"
+    brand_blue   = "#FFFFFF"
     brand_orange = "#F7941D"
     light_text   = "#FFFFFF"
     dark_text    = "#0B1F44"
@@ -1351,4 +1351,5 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
