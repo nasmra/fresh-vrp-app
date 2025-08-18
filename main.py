@@ -662,10 +662,7 @@ with tab_opt:
                             selected_replacements[ch] = rep
                             already_taken.add(rep)
 
-                    restrict_to_selected = st.checkbox(
-                        "Limiter l'optimisation aux **remplaçants choisis** (exclure les autres temporaires)",
-                        value=False
-                    )
+
                 else:
                     st.markdown("<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
             unsafe_allow_html=True)
@@ -1332,6 +1329,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
