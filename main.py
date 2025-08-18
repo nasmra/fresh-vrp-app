@@ -6,11 +6,7 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-def alert_white_red(msg: str):
-    st.markdown(
-        f"<div class='notice-white-red'>{msg}</div>",
-        unsafe_allow_html=True
-    )
+
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
@@ -50,7 +46,7 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels en BLANC (pas tout le texte !) ===== */
+      /* ===== Titres & labels en BLANC ===== */
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
       .stApp .stTextInput > label, .stApp .stNumberInput > label,
@@ -58,20 +54,8 @@ def inject_brand_css():
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Corps Markdown par défaut en blanc pour lisibilité sur fond sombre ===== */
+      /* ===== Markdown par défaut lisible sur fond sombre ===== */
       .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
-
-      /* ===== Surfaces claires : forcer texte foncé ===== */
-      .stApp .stAlert, .stApp .stDataFrame, .stApp .stTable,
-      .stApp .stTextInput, .stApp .stTextArea, .stApp .stNumberInput,
-      .stApp [data-baseweb="select"], .stApp [role="listbox"],
-      .stApp [data-testid="stForm"], .stApp form,
-      .stApp .element-container:has(.notice-white-red) {{
-        color:#111 !important;
-      }}
-      .stApp .stTextInput input, .stApp .stTextArea textarea, .stApp .stNumberInput input {{
-        color:#111 !important; background:#fff !important;
-      }}
 
       /* ===== Sélecteurs ===== */
       .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
@@ -132,7 +116,7 @@ def inject_brand_css():
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
 
-      /* ===== Cartes d’alerte Streamlit : surfaces blanches ===== */
+      /* ===== Cartes d’alerte Streamlit (surfaces blanches) ===== */
       .stApp .stAlert {{
         background:#fff !important;
         border:1px solid rgba(12,61,145,.25) !important;
@@ -141,28 +125,31 @@ def inject_brand_css():
         color:{dark_text} !important;
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
-      .stApp .stAlert.stInfo    {{ border-left:6px solid #0ea5e9 !important; }}
-      .stApp .stAlert.stSuccess {{ border-left:6px solid #10b981 !important; }}
-      .stApp .stAlert.stWarning {{ border-left:6px solid #f59e0b !important; }}
-      .stApp .stAlert.stError   {{ border-left:6px solid #ef4444 !important; }}
 
-      /* ===== Helper notice-white-red : fond blanc + texte rouge (anti-héritage fort) ===== */
+      /* ===== Helper notice-white-red : FOND BLANC + TEXTE ROUGE ===== */
+      /* (Spécificité forte pour battre l'héritage en blanc) */
+      .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
       .stApp .stMarkdown .notice-white-red,
       .stApp .markdown-text-container .notice-white-red {{
         background:#fff !important;
-        border:2px solid rgba(220,53,69,.60) !important;
+        border:2px solid #dc2626 !important;   /* rouge vif */
         border-radius:10px;
         padding:.75rem 1rem;
         box-shadow:0 6px 18px rgba(7,28,71,.10);
-        color:#7a0c0c !important;
+        color:#dc2626 !important;               /* <-- TEXTE ROUGE */
       }}
+      .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
       .stApp .stMarkdown .notice-white-red *,
       .stApp .markdown-text-container .notice-white-red * {{
-        color:#7a0c0c !important;
+        color:#dc2626 !important;               /* enfants aussi en ROUGE */
       }}
     </style>
     """, unsafe_allow_html=True)
 
+
+def alert_white_red(msg: str):
+    """Bloc fond blanc + texte rouge (protégé contre l'héritage global)."""
+    st.markdown(f"<div class='notice-white-red'>{msg}</div>", unsafe_allow_html=True)
 
 
 
@@ -1369,6 +1356,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
