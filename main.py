@@ -60,14 +60,6 @@ def inject_brand_css():
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ✅ Correction : forcer rouge dans notice-white-red même si stMarkdown met tout en blanc */
-      .stApp .stMarkdown .notice-white-red,
-      .stApp .stMarkdown .notice-white-red *,
-      .stApp .markdown-text-container .notice-white-red,
-      .stApp .markdown-text-container .notice-white-red * {{
-        color:#7a0c0c !important;
-      }}
-
       /* ===== Onglets ===== */
       div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
       div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
@@ -106,12 +98,18 @@ def inject_brand_css():
       .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Alert custom lisible sur fond bleu ===== */
+      /* ===== Bloc notice blanc / contour rouge ===== */
       .notice-white-red {{
         background:#fff !important;
         border:2px solid rgba(220,53,69,.60) !important;
         border-radius:10px; padding:.75rem 1rem;
         box-shadow:0 6px 18px rgba(7,28,71,.10);
+        color:#B21F2D !important; /* couleur primaire du bloc */
+      }}
+      /* 🚨 Override absolu : rouge pour tout le contenu de la notice, 
+         peu importe les héritages de couleur globaux */
+      .notice-white-red, .notice-white-red * {{
+        color:#B21F2D !important;
       }}
 
       /* ===== Boutons ===== */
@@ -142,7 +140,6 @@ def inject_brand_css():
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
     </style>
     """, unsafe_allow_html=True)
-
 
 
 
@@ -1363,6 +1360,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
