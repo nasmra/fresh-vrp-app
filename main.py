@@ -93,15 +93,33 @@ def inject_brand_css():
       .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Alert custom lisible sur fond bleu ===== */
-    .notice-white-red {
-      background:#fff !important;
-      border:2px solid rgba(220,53,69,.60) !important;
-      border-radius:10px;
-      padding:.75rem 1rem;
-      color:#7a0c0c !important;
-      box-shadow:0 6px 18px rgba(7,28,71,.10);
-    }
+      /* ===== Alert custom lisible sur fond bleu (classe réutilisable) ===== */
+      .notice-white-red {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px; padding:.75rem 1rem;
+        color:#7a0c0c !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.10);
+      }}
+      /* Forcer la couleur rouge même si le markdown global met le texte en blanc */
+      .stApp .stMarkdown .notice-white-red,
+      .stApp .markdown-text-container .notice-white-red,
+      .stApp .stMarkdown .notice-white-red *,
+      .stApp .markdown-text-container .notice-white-red * {{
+        color:#7a0c0c !important;
+      }}
+
+      /* ===== Restyle des st.info dans la zone remplaçants uniquement ===== */
+      .remp-scope [data-testid="stAlert"] {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.10) !important;
+        color:#7a0c0c !important;
+      }}
+      .remp-scope [data-testid="stAlert"] * {{
+        color:#7a0c0c !important;
+      }}
 
       /* ===== Boutons ===== */
       .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
@@ -118,7 +136,7 @@ def inject_brand_css():
       .stApp form button:hover,
       .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
 
-      /* ===== HERO & TITRE (CE QUI T'INTÉRESSE) ===== */
+      /* ===== HERO & TITRE ===== */
       .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
       .welcome-card {{
         background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
@@ -1338,6 +1356,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
