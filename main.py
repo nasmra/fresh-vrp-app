@@ -6,34 +6,6 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-def alert_white_red(msg: str):
-    # Carte blanche + texte rouge, totalement indépendante des styles Streamlit
-    st.markdown(
-        f"""
-        <div style="
-            background:#fff !important;
-            color:#7a0c0c !important;
-            border:2px solid rgba(220,53,69,.6) !important;
-            border-radius:12px; padding:.75rem 1rem; margin:.35rem 0;
-            box-shadow:0 6px 18px rgba(7,28,71,.10);
-        ">{msg}</div>
-        """,
-        unsafe_allow_html=True
-    )
-
-def white_card(msg: str):
-    # Carte blanche neutre (remplacements choisis)
-    st.markdown(
-        f"""
-        <div style="
-            background:#fff; color:#0B1F44;
-            border:1px solid rgba(12,61,145,.25);
-            border-radius:10px; padding:.6rem .8rem; margin:.35rem 0;
-            box-shadow:0 6px 18px rgba(7,28,71,.06);
-        ">{msg}</div>
-        """,
-        unsafe_allow_html=True
-    )
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
@@ -54,11 +26,11 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
 
 
 def inject_brand_css():
-    brand_blue   = "#FFFFFF"
-    brand_orange = "#FFFFFF"
+    brand_blue   = "#0C3D91"
+    brand_orange = "#F7941D"
     light_text   = "#FFFFFF"
-    dark_text    = "#FFFFFF"
-    bg = "#FFFFFF"
+    dark_text    = "#0B1F44"
+    bg = "#042B80"
     pattern_opacity = 0.012
 
     logo_b64 = _logo_b64()
@@ -642,7 +614,6 @@ with tab_opt:
 
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     # Chauffeurs indisponibles
-    # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     if chauff_file:
         chauff_file.seek(0)
         try:
@@ -650,48 +621,56 @@ with tab_opt:
             dfc["Nom Complet"] = (dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")).str.strip()
             all_ch = [n for n in dfc["Nom Complet"].tolist() if n]
             unv_ch = unavail_multiselect("🚫 Chauffeurs indisponibles", all_ch, key="ch_unavail")
-    
+
+            # Préparation des remplaçants
             selected_replacements = {}
             restrict_to_selected = False
-    
+
             if "Statut" in dfc.columns and unv_ch:
                 mask_temp = dfc["Statut"].astype(str).str.lower().str.contains("temp")
                 df_temp = dfc.loc[mask_temp].copy()
-    
-                st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
-                veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
-                already_taken = set()
-    
-                for i, ch in enumerate(unv_ch):
-                    veh = veh_by_name.get(ch, "")
-    
-                    # Véhicule du titulaire indisponible
-                    if veh in (unv_veh or []):
-                        alert_white_red(f"• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.")
-                        continue
-    
-                    # Temporaires strictement sur le même véhicule
-                    same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"].astype(str) == str(veh), "Nom Complet"].tolist()
-                    same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
-    
-                    if not same_veh_temps:
-                        alert_white_red(f"• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.")
-                        continue
-    
-                    rep = st.selectbox(
-                        f"Remplaçant pour **{ch}** (véhicule {veh})",
-                        ["— Aucun —"] + same_veh_temps,
-                        index=1 if same_veh_temps else 0,
-                        key=f"rep_sameveh_{i}"
-                    )
-                    if rep != "— Aucun —":
-                        selected_replacements[ch] = rep
-                        already_taken.add(rep)
-            else:
-                alert_white_red("Aucun chauffeur temporaire dans la feuille <b>Liste</b>.")
+
+                if not df_temp.empty:
+                    st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
+                    veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
+                    already_taken = set()
+
+                    for i, ch in enumerate(unv_ch):
+                        veh = veh_by_name.get(ch, "")
+                        # Si le véhicule du titulaire est indisponible → pas de proposition
+                        if veh in (unv_veh or []):
+                            st.info(f"• **{ch}** → véhicule **{veh}** indisponible : pas de remplaçant proposé.")
+                            continue
+
+                        # Temporaires STRICTEMENT sur le même véhicule
+                        same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"] == str(veh), "Nom Complet"].tolist()
+                        same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
+
+                        if not same_veh_temps:
+                            st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
+                            
+                            continue
+
+                        options = ["— Aucun —"] + same_veh_temps
+                        rep = st.selectbox(
+                            f"Remplaçant pour **{ch}** (véhicule {veh})",
+                            options,
+                            index=1 if len(options) > 1 else 0,
+                            key=f"rep_sameveh_{i}"
+                        )
+                        if rep != "— Aucun —":
+                            selected_replacements[ch] = rep
+                            already_taken.add(rep)
+
+
+                else:
+                    st.markdown("<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
+            unsafe_allow_html=True)
+
+       
+
         finally:
             chauff_file.seek(0)
-
 
         # ------------------- Lancer l’optimisation -------------------
         if st.button("🚀 Lancer l'optimisation"):
@@ -700,24 +679,23 @@ with tab_opt:
             else:
                 # Construire la liste finale des chauffeurs à exclure
                 unv_ch_final = list(unv_ch)
-
-                # Option : n'autoriser que les temporaires explicitement choisis
-                if dfc is not None and "Statut" in dfc.columns and restrict_to_selected:
+                
+                # AUTO : si au moins un remplaçant est choisi, exclure tous les autres temporaires
+                if dfc is not None and "Statut" in dfc.columns and len(selected_replacements) > 0:
                     temp_all = set(
                         dfc.loc[dfc["Statut"].astype(str).str.lower().str.contains("temp"),
                                 "Nom Complet"].tolist()
                     )
                     keep = set(selected_replacements.values())
-                    # Tous les temporaires non sélectionnés deviennent "indisponibles"
                     extra_unavailable = list(temp_all - keep)
                     unv_ch_final.extend(extra_unavailable)
 
-                # Petit résumé des remplacements
 
-                # Après
+                # Petit résumé des remplacements
                 if selected_replacements:
-                    pairs = "<br>".join([f"– {u} → {r}" for u, r in selected_replacements.items()])
-                    white_card(f"<b>Remplaçants choisis :</b><br>{pairs}")
+                    pairs = "\n".join([f"- {u} → {r}" for u, r in selected_replacements.items()])
+                    st.info(f"Remplaçants choisis :\n{pairs}")
+
                 with st.spinner("Optimisation en cours…"):
                     st.session_state.dist_buf.seek(0)
                     orders_file.seek(0); veh_file.seek(0); chauff_file.seek(0)
@@ -1351,6 +1329,3 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
-
-
-
