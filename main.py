@@ -6,10 +6,6 @@ import base64
 from pathlib import Path
 import streamlit as st
 
-from pathlib import Path
-import base64
-import streamlit as st
-
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
@@ -28,35 +24,106 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
             pass
     return ""
 
-st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
-
-import streamlit as st
 
 def inject_brand_css():
-    st.markdown(
-        """
-        <style>
-        /* On cible les textes qui héritent du "bleu Streamlit" */
-        .stMarkdown p,
-        .stMarkdown li,
-        .stMarkdown span {
-            color: #000 !important; /* noir par défaut */
-        }
+    brand_blue   = "#0C3D91"
+    brand_orange = "#F7941D"
+    light_text   = "#FFFFFF"
+    dark_text    = "#0B1F44"
+    bg = "#042B80"
+    pattern_opacity = 0.012
 
-        /* Si tu veux cibler UNIQUEMENT les puces (• Chauffeur etc.) */
-        .stMarkdown ul li {
-            color: #000 !important;
-        }
+    logo_b64 = _logo_b64()
 
-        /* Pour éviter que Streamlit recolore les liens */
-        .stMarkdown a {
-            color: #0066cc !important; /* garde le bleu uniquement pour les vrais liens */
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown(f"""
+    <style>
+      /* ===== Fond + filigrane ===== */
+      .stApp {{
+        background:
+          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
+          linear-gradient(160deg, {bg} 0%, {bg} 45%, {bg} 100%);
+        background-attachment: fixed;
+      }}
+      {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
+      /* ===== Titres & labels en BLANC ===== */
+      .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
+      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
+      .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
+      .stApp .stTextInput > label, .stApp .stNumberInput > label,
+      .stApp .stDateInput > label, .stApp .stTextArea > label,
+      .stApp .stSlider > label, .stApp .stRadio > label,
+      .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
+
+      /* ===== Onglets ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
+      div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
+        border-radius:999px !important; padding:.45rem .9rem !important;
+        box-shadow:0 1px 1px rgba(7,28,71,.06); font-weight:600 !important; color:#000 !important;
+      }}
+      div[data-baseweb="tab-list"] button[aria-selected="true"],
+      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
+        border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25);
+      }}
+      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{
+        background:{brand_orange} !important; height:3px !important; border-radius:2px;
+      }}
+
+      /* ===== SELECTS : texte NOIR ===== */
+      .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
+      .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
+      body [data-baseweb="layer"] [role="listbox"],
+      body [data-baseweb="popover"] [role="listbox"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important; box-shadow:0 8px 24px rgba(7,28,71,.18);
+      }}
+      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
+      body [role="listbox"] [role="option"]:hover, body [role="listbox"] [role="option"]:hover * {{
+        background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
+      }}
+      body [role="listbox"] [role="option"][aria-selected="true"],
+      body [role="listbox"] [role="option"][aria-selected="true"] * {{
+        background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
+      }}
+
+      /* ===== Chips ===== */
+      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
+      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
+      .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
+      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
+
+      /* ===== Alert custom lisible sur fond bleu ===== */
+      .notice-white-red {{ background:#fff !important; border:2px solid rgba(220,53,69,.60) !important; border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10); }}
+
+      /* ===== Boutons ===== */
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button:hover {{ background:#FFA23A; }}
+      .stApp [data-testid="stFormSubmitButton"] button,
+      .stApp [data-testid="stForm"] button,
+      .stApp form button,
+      .stApp button[kind][data-testid^="baseButton"] {{
+        background:{brand_orange} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
+        padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
+      }}
+      .stApp [data-testid="stFormSubmitButton"] button:hover,
+      .stApp [data-testid="stForm"] button:hover,
+      .stApp form button:hover,
+      .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
+
+      /* ===== HERO & TITRE (CE QUI T'INTÉRESSE) ===== */
+      .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
+      .welcome-card {{
+        background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
+        box-shadow:0 10px 24px rgba(0,0,0,.18);
+        max-width:880px; width:min(92vw,880px); text-align:center;
+      }}
+      .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
+      .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
+
+      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
+    </style>
+    """, unsafe_allow_html=True)
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
@@ -68,7 +135,7 @@ def unavail_multiselect(label, options, key=None, **kwargs):
 
 
 
-# inject_brand_css()
+inject_brand_css()
 
 # =================== Auth ===================
 def _logout():
@@ -358,7 +425,7 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
 # =========================================================
 #                    CONFIG / STYLES
 # =========================================================
-#st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
+st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
 inject_brand_css()  # <= ICI : en dernier pour qu'il prenne le dessus
 
 st.markdown(
@@ -402,7 +469,7 @@ def now_france_str(fmt: str = "%d/%m/%Y – %H:%M:%S") -> str:
         # 3) fallback très simple (approx.) : UTC+2 (été) / adaptez si besoin
         return (datetime.utcnow().replace(tzinfo=timezone.utc) + timedelta(hours=2)).strftime(fmt)
 
-#inject_brand_css()
+inject_brand_css()
 
 now = now_france_str()
 
@@ -547,77 +614,63 @@ with tab_opt:
 
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     # Chauffeurs indisponibles
-    # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
-    # Chauffeurs indisponibles
-    # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     if chauff_file:
         chauff_file.seek(0)
         try:
             dfc = pd.read_excel(chauff_file, sheet_name="Liste")
-            dfc["Nom Complet"] = (
-                dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")
-            ).str.strip()
+            dfc["Nom Complet"] = (dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")).str.strip()
             all_ch = [n for n in dfc["Nom Complet"].tolist() if n]
             unv_ch = unavail_multiselect("🚫 Chauffeurs indisponibles", all_ch, key="ch_unavail")
-    
-            # Remplaçants
+
+            # Préparation des remplaçants
             selected_replacements = {}
-    
+            restrict_to_selected = False
+
             if "Statut" in dfc.columns and unv_ch:
                 mask_temp = dfc["Statut"].astype(str).str.lower().str.contains("temp")
                 df_temp = dfc.loc[mask_temp].copy()
-    
+
                 if not df_temp.empty:
                     st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
                     veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
                     already_taken = set()
-    
+
                     for i, ch in enumerate(unv_ch):
                         veh = veh_by_name.get(ch, "")
-    
-                        # Si le véhicule du titulaire est indisponible → message en BLANC/ROUGE
+                        # Si le véhicule du titulaire est indisponible → pas de proposition
                         if veh in (unv_veh or []):
-                            st.markdown(
-                                f"<div class='notice-white-red'>• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.</div>",
-                                unsafe_allow_html=True,
-                            )
+                            st.info(f"• **{ch}** → véhicule **{veh}** indisponible : pas de remplaçant proposé.")
                             continue
-    
+
                         # Temporaires STRICTEMENT sur le même véhicule
-                        same_veh_temps = df_temp.loc[
-                            df_temp["Véhicule affecté"].astype(str) == str(veh), "Nom Complet"
-                        ].tolist()
+                        same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"] == str(veh), "Nom Complet"].tolist()
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
-    
-                        # Aucun temporaire dispo → message en BLANC/ROUGE (le cas que tu cites)
+
                         if not same_veh_temps:
-                            st.markdown(
-                                f"<div class='notice-white-red'>• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.</div>",
-                                unsafe_allow_html=True,
-                            )
+                            st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
+                            
                             continue
-    
-                        # Sélecteur du remplaçant
+
                         options = ["— Aucun —"] + same_veh_temps
                         rep = st.selectbox(
                             f"Remplaçant pour **{ch}** (véhicule {veh})",
                             options,
                             index=1 if len(options) > 1 else 0,
-                            key=f"rep_sameveh_{i}",
+                            key=f"rep_sameveh_{i}"
                         )
                         if rep != "— Aucun —":
                             selected_replacements[ch] = rep
                             already_taken.add(rep)
-    
+
+
                 else:
-                    st.markdown(
-                        "<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
-                        unsafe_allow_html=True,
-                    )
-    
+                    st.markdown("<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
+            unsafe_allow_html=True)
+
+       
+
         finally:
             chauff_file.seek(0)
-
 
         # ------------------- Lancer l’optimisation -------------------
         if st.button("🚀 Lancer l'optimisation"):
@@ -626,17 +679,17 @@ with tab_opt:
             else:
                 # Construire la liste finale des chauffeurs à exclure
                 unv_ch_final = list(unv_ch)
-                
-                # AUTO : si au moins un remplaçant est choisi, exclure tous les autres temporaires
-                if dfc is not None and "Statut" in dfc.columns and len(selected_replacements) > 0:
+
+                # Option : n'autoriser que les temporaires explicitement choisis
+                if dfc is not None and "Statut" in dfc.columns and restrict_to_selected:
                     temp_all = set(
                         dfc.loc[dfc["Statut"].astype(str).str.lower().str.contains("temp"),
                                 "Nom Complet"].tolist()
                     )
                     keep = set(selected_replacements.values())
+                    # Tous les temporaires non sélectionnés deviennent "indisponibles"
                     extra_unavailable = list(temp_all - keep)
                     unv_ch_final.extend(extra_unavailable)
-
 
                 # Petit résumé des remplacements
                 if selected_replacements:
@@ -1276,74 +1329,4 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
