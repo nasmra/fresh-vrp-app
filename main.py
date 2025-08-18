@@ -647,8 +647,10 @@ with tab_opt:
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
 
                         if not same_veh_temps:
-                            st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
-                            
+                            st.markdown(
+                                f"<div class='notice-white-red'>• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.</div>",
+                                unsafe_allow_html=True
+                            )
                             continue
 
                         options = ["— Aucun —"] + same_veh_temps
@@ -1329,6 +1331,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
