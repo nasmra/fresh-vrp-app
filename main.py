@@ -51,14 +51,30 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels en BLANC ===== */
-      .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
+      /* ===== Titres & labels ===== */
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
       .stApp .stTextInput > label, .stApp .stNumberInput > label,
       .stApp .stDateInput > label, .stApp .stTextArea > label,
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
+
+      /* Texte Markdown par défaut en blanc sauf alertes */
+      .stApp .stMarkdown, .stApp .markdown-text-container {{
+        color:{light_text} !important;
+      }}
+
+      /* ===== Alertes custom (fond blanc + texte rouge) ===== */
+      .notice-white-red {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px; padding:.75rem 1rem;
+        color:#7a0c0c !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.10);
+      }}
+      .notice-white-red * {{
+        color:#7a0c0c !important;
+      }}
 
       /* ===== Onglets ===== */
       div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
@@ -98,34 +114,6 @@ def inject_brand_css():
       .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Alert custom réutilisable en Markdown ===== */
-      .notice-white-red {{
-        background:#fff !important;
-        border:2px solid rgba(220,53,69,.60) !important;
-        border-radius:10px; padding:.75rem 1rem;
-        color:#7a0c0c !important;
-        box-shadow:0 6px 18px rgba(7,28,71,.10);
-      }}
-      /* Forcer le texte rouge même si le global met tout en blanc */
-      .stApp .stMarkdown .notice-white-red,
-      .stApp .markdown-text-container .notice-white-red,
-      .stApp .stMarkdown .notice-white-red *,
-      .stApp .markdown-text-container .notice-white-red * {{
-        color:#7a0c0c !important;
-      }}
-
-      /* ===== Re-style des st.info UNIQUEMENT dans la zone remplaçants ===== */
-      .remp-scope [data-testid="stAlert"] {{
-        background:#fff !important;
-        border:2px solid rgba(220,53,69,.60) !important;
-        border-radius:10px !important;
-        box-shadow:0 6px 18px rgba(7,28,71,.10) !important;
-        color:#7a0c0c !important;
-      }}
-      .remp-scope [data-testid="stAlert"] * {{
-        color:#7a0c0c !important;
-      }}
-
       /* ===== Boutons ===== */
       .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
       .stButton>button:hover {{ background:#FFA23A; }}
@@ -154,6 +142,7 @@ def inject_brand_css():
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def unavail_multiselect(label, options, key=None, **kwargs):
@@ -1373,6 +1362,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
