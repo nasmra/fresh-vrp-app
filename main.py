@@ -6,6 +6,10 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+from pathlib import Path
+import base64
+import streamlit as st
+
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
@@ -93,7 +97,7 @@ def inject_brand_css():
       .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Alert custom lisible sur fond bleu (classe réutilisable) ===== */
+      /* ===== Alert custom réutilisable en Markdown ===== */
       .notice-white-red {{
         background:#fff !important;
         border:2px solid rgba(220,53,69,.60) !important;
@@ -101,7 +105,7 @@ def inject_brand_css():
         color:#7a0c0c !important;
         box-shadow:0 6px 18px rgba(7,28,71,.10);
       }}
-      /* Forcer la couleur rouge même si le markdown global met le texte en blanc */
+      /* Forcer le texte rouge même si le global met tout en blanc */
       .stApp .stMarkdown .notice-white-red,
       .stApp .markdown-text-container .notice-white-red,
       .stApp .stMarkdown .notice-white-red *,
@@ -109,7 +113,7 @@ def inject_brand_css():
         color:#7a0c0c !important;
       }}
 
-      /* ===== Restyle des st.info dans la zone remplaçants uniquement ===== */
+      /* ===== Re-style des st.info UNIQUEMENT dans la zone remplaçants ===== */
       .remp-scope [data-testid="stAlert"] {{
         background:#fff !important;
         border:2px solid rgba(220,53,69,.60) !important;
@@ -1358,6 +1362,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
