@@ -30,39 +30,138 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
     return ""
 
 def inject_brand_css():
-    st.markdown(
-        """
-        <style>
-        /* ================== ALERT WHITE + RED ================== */
-        .alert_white_red {
-            background-color: white !important;
-            color: black !important;
-            font-weight: 600;
-            padding: 8px 14px;
-            border-left: 5px solid red;
-            border-radius: 6px;
-            margin: 6px 0;
-            line-height: 1.5;
-        }
+    brand_blue   = "#0C3D91"
+    brand_orange = "#F7941D"
+    light_text   = "#FFFFFF"
+    dark_text    = "#0B1F44"
+    bg = "#042B80"
+    pattern_opacity = 0.012
 
-        /* Forcer les puces rouges */
-        .alert_white_red ul {
-            margin: 0;
-            padding-left: 20px;
-            list-style-type: disc;
-        }
-        .alert_white_red ul li {
-            color: red !important;       /* puce + texte rouge */
-            font-weight: 600;
-        }
-        .alert_white_red ul li span {
-            color: black !important;     /* texte interne en noir */
-            font-weight: 500;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    logo_b64 = _logo_b64()
+
+    st.markdown(f"""
+    <style>
+      /* ===== Fond + filigrane ===== */
+      .stApp {{
+        background:
+          radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
+          linear-gradient(160deg, {bg} 0%, {bg} 45%, {bg} 100%);
+        background-attachment: fixed;
+      }}
+      {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
+
+      /* ===== Titres & labels en BLANC (pas tout le texte !) ===== */
+      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
+      .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
+      .stApp .stTextInput > label, .stApp .stNumberInput > label,
+      .stApp .stDateInput > label, .stApp .stTextArea > label,
+      .stApp .stSlider > label, .stApp .stRadio > label,
+      .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
+
+      /* ===== Corps Markdown par défaut en blanc pour lisibilité sur fond sombre ===== */
+      .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
+
+      /* ===== Surfaces claires : forcer texte foncé ===== */
+      .stApp .stAlert, .stApp .stDataFrame, .stApp .stTable,
+      .stApp .stTextInput, .stApp .stTextArea, .stApp .stNumberInput,
+      .stApp [data-baseweb="select"], .stApp [role="listbox"],
+      .stApp [data-testid="stForm"], .stApp form,
+      .stApp .element-container:has(.notice-white-red) {{
+        color:#111 !important;
+      }}
+      .stApp .stTextInput input, .stApp .stTextArea textarea, .stApp .stNumberInput input {{
+        color:#111 !important; background:#fff !important;
+      }}
+
+      /* ===== Sélecteurs ===== */
+      .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
+      .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
+      body [data-baseweb="layer"] [role="listbox"],
+      body [data-baseweb="popover"] [role="listbox"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important; box-shadow:0 8px 24px rgba(7,28,71,.18);
+      }}
+      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
+      body [role="listbox"] [role="option"]:hover, body [role="listbox"] [role="option"]:hover * {{
+        background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
+      }}
+      body [role="listbox"] [role="option"][aria-selected="true"],
+      body [role="listbox"] [role="option"][aria-selected="true"] * {{
+        background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
+      }}
+
+      /* ===== Chips indisponibilités ===== */
+      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
+      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
+      .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
+      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
+
+      /* ===== Boutons / Onglets ===== */
+      div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
+      div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
+        border-radius:999px !important; padding:.45rem .9rem !important;
+        box-shadow:0 1px 1px rgba(7,28,71,.06); font-weight:600 !important; color:#000 !important;
+      }}
+      div[data-baseweb="tab-list"] button[aria-selected="true"],
+      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{ border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25); }}
+      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{ background:{brand_orange} !important; height:3px !important; border-radius:2px; }}
+
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button:hover {{ background:#FFA23A; }}
+      .stApp [data-testid="stFormSubmitButton"] button,
+      .stApp [data-testid="stForm"] button,
+      .stApp form button,
+      .stApp button[kind][data-testid^="baseButton"] {{
+        background:{brand_orange} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
+        padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
+      }}
+      .stApp [data-testid="stFormSubmitButton"] button:hover,
+      .stApp [data-testid="stForm"] button:hover,
+      .stApp form button:hover,
+      .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
+
+      /* ===== HÉRO & TITRE ===== */
+      .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
+      .welcome-card {{
+        background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
+        box-shadow:0 10px 24px rgba(0,0,0,.18);
+        max-width:880px; width:min(92vw,880px); text-align:center;
+      }}
+      .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
+      .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
+      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
+
+      /* ===== Cartes d’alerte Streamlit : surfaces blanches ===== */
+      .stApp .stAlert {{
+        background:#fff !important;
+        border:1px solid rgba(12,61,145,.25) !important;
+        border-radius:10px !important;
+        box-shadow:0 6px 18px rgba(7,28,71,.08);
+        color:{dark_text} !important;
+      }}
+      .stApp .stAlert * {{ color:{dark_text} !important; }}
+      .stApp .stAlert.stInfo    {{ border-left:6px solid #0ea5e9 !important; }}
+      .stApp .stAlert.stSuccess {{ border-left:6px solid #10b981 !important; }}
+      .stApp .stAlert.stWarning {{ border-left:6px solid #f59e0b !important; }}
+      .stApp .stAlert.stError   {{ border-left:6px solid #ef4444 !important; }}
+
+      /* ===== Helper notice-white-red : fond blanc + texte rouge (anti-héritage fort) ===== */
+      .stApp .stMarkdown .notice-white-red,
+      .stApp .markdown-text-container .notice-white-red {{
+        background:#fff !important;
+        border:2px solid rgba(220,53,69,.60) !important;
+        border-radius:10px;
+        padding:.75rem 1rem;
+        box-shadow:0 6px 18px rgba(7,28,71,.10);
+        color:#7a0c0c !important;
+      }}
+      .stApp .stMarkdown .notice-white-red *,
+      .stApp .markdown-text-container .notice-white-red * {{
+        color:#7a0c0c !important;
+      }}
+    </style>
+    """, unsafe_allow_html=True)
 
 
 
@@ -1270,6 +1369,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
