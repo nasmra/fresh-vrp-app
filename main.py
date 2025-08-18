@@ -6,6 +6,34 @@ import base64
 from pathlib import Path
 import streamlit as st
 
+def alert_white_red(msg: str):
+    # Carte blanche + texte rouge, totalement indépendante des styles Streamlit
+    st.markdown(
+        f"""
+        <div style="
+            background:#fff !important;
+            color:#7a0c0c !important;
+            border:2px solid rgba(220,53,69,.6) !important;
+            border-radius:12px; padding:.75rem 1rem; margin:.35rem 0;
+            box-shadow:0 6px 18px rgba(7,28,71,.10);
+        ">{msg}</div>
+        """,
+        unsafe_allow_html=True
+    )
+
+def white_card(msg: str):
+    # Carte blanche neutre (remplacements choisis)
+    st.markdown(
+        f"""
+        <div style="
+            background:#fff; color:#0B1F44;
+            border:1px solid rgba(12,61,145,.25);
+            border-radius:10px; padding:.6rem .8rem; margin:.35rem 0;
+            box-shadow:0 6px 18px rgba(7,28,71,.06);
+        ">{msg}</div>
+        """,
+        unsafe_allow_html=True
+    )
 
 def _logo_b64(path: str = "assets/company_logo.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
@@ -23,6 +51,7 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
         except Exception:
             pass
     return ""
+
 
 def inject_brand_css():
     brand_blue   = "#0C3D91"
@@ -45,72 +74,16 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels lisibles sur fond sombre ===== */
-      .stApp h1,.stApp h2,.stApp h3,.stApp h4,.stApp h5,.stApp h6,
-      .stApp label {{ color:{light_text} !important; }}
+      /* ===== Titres & labels en BLANC ===== */
+      .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
+      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
+      .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
+      .stApp .stTextInput > label, .stApp .stNumberInput > label,
+      .stApp .stDateInput > label, .stApp .stTextArea > label,
+      .stApp .stSlider > label, .stApp .stRadio > label,
+      .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
 
-      /* ===== Zones à fond clair => texte noir ===== */
-      .stApp .stAlert, .stApp .stDataFrame, .stApp .stTable,
-      .stApp .stTextInput, .stApp .stTextArea, .stApp .stNumberInput,
-      .stApp [data-baseweb="select"], .stApp [role="listbox"],
-      .stApp [data-testid="stMarkdownContainer"] table {{
-        color:#111 !important;
-      }}
-      .stApp .stTextInput input, .stApp .stTextArea textarea, .stApp .stNumberInput input {{
-        color:#111 !important; background:#fff !important;
-      }}
-
-      /* ===== Re-thème des alertes Streamlit ===== */
-      .stApp .stAlert {{
-        background:#fff !important;
-        border:1px solid rgba(12,61,145,.25) !important;
-        border-left:6px solid {brand_orange} !important;
-        border-radius:10px !important;
-        color:{dark_text} !important;
-        box-shadow:0 6px 18px rgba(7,28,71,.08);
-      }}
-      .stApp .stAlert * {{ color:{dark_text} !important; }}
-      .stApp .stSuccess {{ border-left-color:#10b981 !important; }}
-      .stApp .stWarning {{ border-left-color:#f59e0b !important; }}
-      .stApp .stInfo    {{ border-left-color:#0ea5e9 !important; }}
-      .stApp .stError   {{ border-left-color:#ef4444 !important; }}
-
-      /* ===== Alerte personnalisée fond blanc + texte rouge ===== */
-    /* ===== Alerte personnalisée fond blanc + texte rouge (AMÉLIORÉ) ===== */
-    .notice-white-red {
-        background-color: #ffffff !important; /* Fond blanc explicite */
-        border: 1px solid #dc3545 !important;   /* Bordure rouge subtile */
-        border-radius: 10px;
-        padding: 0.75rem 1.25rem;
-        margin-bottom: 1rem;                  /* Espace sous l'alerte */
-        color: #7a0c0c !important;             /* Couleur du texte rouge foncé */
-        box-shadow: 0 4px 12px rgba(7,28,71,.12);
-    }
-    /* Assure que TOUT le texte à l'intérieur (y compris les balises <b>) soit rouge */
-    .notice-white-red * {
-        color: inherit !important;
-    }
-
-      /* ===== Selects & popovers ===== */
-      .stApp [data-baseweb="select"], .stApp [data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
-      body [data-baseweb="layer"] [role="listbox"],
-      body [data-baseweb="popover"] [role="listbox"] {{
-        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important; box-shadow:0 8px 24px rgba(7,28,71,.18);
-      }}
-      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
-      body [role="listbox"] [role="option"]:hover, body [role="listbox"] [role="option"]:hover * {{ background:#F3F6FB !important; color:#111 !important; fill:#111 !important; }}
-      body [role="listbox"] [role="option"][aria-selected="true"], body [role="listbox"] [role="option"][aria-selected="true"] * {{
-        background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
-      }}
-
-      /* ===== Chips ===== */
-      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
-      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
-      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
-      .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
-      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
-
-      /* ===== Onglets & Boutons ===== */
+      /* ===== Onglets ===== */
       div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
       div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
         background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
@@ -121,12 +94,52 @@ def inject_brand_css():
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{
         border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25);
       }}
-      .stButton>button {{
-        background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12;
+      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{
+        background:{brand_orange} !important; height:3px !important; border-radius:2px;
       }}
-      .stButton>button:hover {{ background:#FFA23A; }}
 
-      /* ===== Hero / titre ===== */
+      /* ===== SELECTS : texte NOIR ===== */
+      .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
+      .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
+      body [data-baseweb="layer"] [role="listbox"],
+      body [data-baseweb="popover"] [role="listbox"] {{
+        background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important; box-shadow:0 8px 24px rgba(7,28,71,.18);
+      }}
+      body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
+      body [role="listbox"] [role="option"]:hover, body [role="listbox"] [role="option"]:hover * {{
+        background:#F3F6FB !important; color:#111 !important; fill:#111 !important;
+      }}
+      body [role="listbox"] [role="option"][aria-selected="true"],
+      body [role="listbox"] [role="option"][aria-selected="true"] * {{
+        background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
+      }}
+
+      /* ===== Chips ===== */
+      [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
+      [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
+      [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
+      .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
+      .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
+
+      /* ===== Alert custom lisible sur fond bleu ===== */
+      .notice-white-red {{ background:#fff !important; border:2px solid rgba(220,53,69,.60) !important; border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10); }}
+
+      /* ===== Boutons ===== */
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button:hover {{ background:#FFA23A; }}
+      .stApp [data-testid="stFormSubmitButton"] button,
+      .stApp [data-testid="stForm"] button,
+      .stApp form button,
+      .stApp button[kind][data-testid^="baseButton"] {{
+        background:{brand_orange} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
+        padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
+      }}
+      .stApp [data-testid="stFormSubmitButton"] button:hover,
+      .stApp [data-testid="stForm"] button:hover,
+      .stApp form button:hover,
+      .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
+
+      /* ===== HERO & TITRE (CE QUI T'INTÉRESSE) ===== */
       .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
       .welcome-card {{
         background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
@@ -135,7 +148,8 @@ def inject_brand_css():
       }}
       .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
-      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); color:{light_text} !important; }}
+
+      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -149,7 +163,7 @@ def unavail_multiselect(label, options, key=None, **kwargs):
 
 
 
-#inject_brand_css()
+inject_brand_css()
 
 # =================== Auth ===================
 def _logout():
@@ -483,7 +497,7 @@ def now_france_str(fmt: str = "%d/%m/%Y – %H:%M:%S") -> str:
         # 3) fallback très simple (approx.) : UTC+2 (été) / adaptez si besoin
         return (datetime.utcnow().replace(tzinfo=timezone.utc) + timedelta(hours=2)).strftime(fmt)
 
-#inject_brand_css()
+inject_brand_css()
 
 now = now_france_str()
 
@@ -625,13 +639,10 @@ with tab_opt:
             )
         finally:
             veh_file.seek(0)
-            
-def _alert_white_red(msg: str):
-    # Fond blanc + texte rouge, styles déjà définis dans .notice-white-red
-    st.markdown(f"<div class='notice-white-red'>{msg}</div>", unsafe_allow_html=True)
 
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     # Chauffeurs indisponibles
+    # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     if chauff_file:
         chauff_file.seek(0)
         try:
@@ -639,56 +650,48 @@ def _alert_white_red(msg: str):
             dfc["Nom Complet"] = (dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")).str.strip()
             all_ch = [n for n in dfc["Nom Complet"].tolist() if n]
             unv_ch = unavail_multiselect("🚫 Chauffeurs indisponibles", all_ch, key="ch_unavail")
-
-            # Préparation des remplaçants
+    
             selected_replacements = {}
             restrict_to_selected = False
-
+    
             if "Statut" in dfc.columns and unv_ch:
                 mask_temp = dfc["Statut"].astype(str).str.lower().str.contains("temp")
                 df_temp = dfc.loc[mask_temp].copy()
-
-                if not df_temp.empty:
-                    st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
-                    veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
-                    already_taken = set()
-
-                    for i, ch in enumerate(unv_ch):
-                        veh = veh_by_name.get(ch, "")
-                        # Si le véhicule du titulaire est indisponible → pas de proposition
-                        if veh in (unv_veh or []):
-                            _alert_white_red(f"• {ch} → véhicule {veh} indisponible : pas de remplaçant proposé.")
-
-                            continue
-
-                        # Temporaires STRICTEMENT sur le même véhicule
-                        same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"] == str(veh), "Nom Complet"].tolist()
-                        same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
-
-                        if not same_veh_temps:
-                            _alert_white-red(f"• {ch} → aucun temporaire disponible sur le véhicule {veh}.")
-                            continue
-
-                        options = ["— Aucun —"] + same_veh_temps
-                        rep = st.selectbox(
-                            f"Remplaçant pour **{ch}** (véhicule {veh})",
-                            options,
-                            index=1 if len(options) > 1 else 0,
-                            key=f"rep_sameveh_{i}"
-                        )
-                        if rep != "— Aucun —":
-                            selected_replacements[ch] = rep
-                            already_taken.add(rep)
-
-
-                else:
-                    st.markdown("<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
-            unsafe_allow_html=True)
-
-       
-
+    
+                st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
+                veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
+                already_taken = set()
+    
+                for i, ch in enumerate(unv_ch):
+                    veh = veh_by_name.get(ch, "")
+    
+                    # Véhicule du titulaire indisponible
+                    if veh in (unv_veh or []):
+                        alert_white_red(f"• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.")
+                        continue
+    
+                    # Temporaires strictement sur le même véhicule
+                    same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"].astype(str) == str(veh), "Nom Complet"].tolist()
+                    same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
+    
+                    if not same_veh_temps:
+                        alert_white_red(f"• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.")
+                        continue
+    
+                    rep = st.selectbox(
+                        f"Remplaçant pour **{ch}** (véhicule {veh})",
+                        ["— Aucun —"] + same_veh_temps,
+                        index=1 if same_veh_temps else 0,
+                        key=f"rep_sameveh_{i}"
+                    )
+                    if rep != "— Aucun —":
+                        selected_replacements[ch] = rep
+                        already_taken.add(rep)
+            else:
+                alert_white_red("Aucun chauffeur temporaire dans la feuille <b>Liste</b>.")
         finally:
             chauff_file.seek(0)
+
 
         # ------------------- Lancer l’optimisation -------------------
         if st.button("🚀 Lancer l'optimisation"):
@@ -710,10 +713,11 @@ def _alert_white_red(msg: str):
                     unv_ch_final.extend(extra_unavailable)
 
                 # Petit résumé des remplacements
-                if selected_replacements:
-                    pairs = "\n".join([f"- {u} → {r}" for u, r in selected_replacements.items()])
-                    st.info(f"Remplaçants choisis :\n{pairs}")
 
+                # Après
+                if selected_replacements:
+                    pairs = "<br>".join([f"– {u} → {r}" for u, r in selected_replacements.items()])
+                    white_card(f"<b>Remplaçants choisis :</b><br>{pairs}")
                 with st.spinner("Optimisation en cours…"):
                     st.session_state.dist_buf.seek(0)
                     orders_file.seek(0); veh_file.seek(0); chauff_file.seek(0)
@@ -1347,8 +1351,4 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
-
-
-
-
 
