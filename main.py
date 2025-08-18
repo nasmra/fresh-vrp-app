@@ -1,6 +1,7 @@
 import os, time
 import streamlit as st
 from pathlib import Path
+import unicodedata
 
 import base64
 from pathlib import Path
@@ -641,43 +642,62 @@ with tab_opt:
 
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     # Chauffeurs indisponibles
+    # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     if chauff_file:
         chauff_file.seek(0)
         try:
             dfc = pd.read_excel(chauff_file, sheet_name="Liste")
-            dfc["Nom Complet"] = (dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")).str.strip()
-            all_ch = [n for n in dfc["Nom Complet"].tolist() if n]
-            unv_ch = unavail_multiselect("🚫 Chauffeurs indisponibles", all_ch, key="ch_unavail")
-
-            # Préparation des remplaçants
+    
+            # Nom complet
+            dfc["Nom Complet"] = (
+                dfc["Nom"].astype(str).fillna("") + " " + dfc["Prénom"].astype(str).fillna("")
+            ).str.strip()
+    
+            # Helper: statut temporaire ?
+            def _is_temp_statut(x) -> bool:
+                s = unicodedata.normalize("NFKD", str(x or "")).encode("ascii", "ignore").decode("ascii").lower()
+                # couvre: "temp", "temporaire", "intérim", "interim", "extra"
+                return any(k in s for k in ("temp", "interim", "interimaire", "extra"))
+    
+            # 1) Liste pour "Chauffeurs indisponibles" = PERMANENTS uniquement
+            if "Statut" in dfc.columns:
+                df_perm = dfc.loc[~dfc["Statut"].apply(_is_temp_statut)].copy()
+            else:
+                df_perm = dfc.copy()  # si colonne manquante, on garde tout
+    
+            all_ch_perm = sorted([n for n in df_perm["Nom Complet"].dropna().unique().tolist() if n])
+            unv_ch = unavail_multiselect(
+                "🚫 Chauffeurs indisponibles (permanents uniquement)",
+                all_ch_perm,
+                key="ch_unavail"
+            )
+    
+            # 2) Remplaçants = TEMPORAIRES sur le même véhicule
             selected_replacements = {}
             restrict_to_selected = False
-
+    
             if "Statut" in dfc.columns and unv_ch:
-                mask_temp = dfc["Statut"].astype(str).str.lower().str.contains("temp")
-                df_temp = dfc.loc[mask_temp].copy()
-
+                df_temp = dfc.loc[dfc["Statut"].apply(_is_temp_statut)].copy()
                 if not df_temp.empty:
                     st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
+    
                     veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
                     already_taken = set()
-
+    
                     for i, ch in enumerate(unv_ch):
                         veh = veh_by_name.get(ch, "")
-                        # Si le véhicule du titulaire est indisponible → pas de proposition
+    
                         if veh in (unv_veh or []):
-                            st.info(f"• **{ch}** → véhicule **{veh}** indisponible : pas de remplaçant proposé.")
+                            alert_white_red(f"• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.")
                             continue
-
-                        # Temporaires STRICTEMENT sur le même véhicule
-                        same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"] == str(veh), "Nom Complet"].tolist()
+    
+                        same_veh_temps = df_temp.loc[df_temp["Véhicule affecté"].astype(str) == str(veh), "Nom Complet"].tolist()
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
-
+    
                         if not same_veh_temps:
-                            st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
-                            
+                            alert_white_red(f"• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.")
                             continue
-
+    
                         options = ["— Aucun —"] + same_veh_temps
                         rep = st.selectbox(
                             f"Remplaçant pour **{ch}** (véhicule {veh})",
@@ -688,16 +708,11 @@ with tab_opt:
                         if rep != "— Aucun —":
                             selected_replacements[ch] = rep
                             already_taken.add(rep)
-
-
                 else:
-                    st.markdown("<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
-            unsafe_allow_html=True)
-
-       
-
+                    alert_white_red("Aucun chauffeur temporaire dans la feuille <b>Liste</b>.")
         finally:
             chauff_file.seek(0)
+
 
         # ------------------- Lancer l’optimisation -------------------
         if st.button("🚀 Lancer l'optimisation"):
@@ -1356,6 +1371,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
