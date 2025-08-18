@@ -28,6 +28,7 @@ def _logo_b64(path: str = "assets/company_logo.png") -> str:
             pass
     return ""
 
+st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
 
 def inject_brand_css():
     brand_blue   = "#0C3D91"
@@ -164,7 +165,7 @@ def unavail_multiselect(label, options, key=None, **kwargs):
 
 
 
-inject_brand_css()
+# inject_brand_css()
 
 # =================== Auth ===================
 def _logout():
@@ -454,7 +455,7 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
 # =========================================================
 #                    CONFIG / STYLES
 # =========================================================
-st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
+#st.set_page_config(layout="wide", page_title="Gestion & optimisation des tournées")
 inject_brand_css()  # <= ICI : en dernier pour qu'il prenne le dessus
 
 st.markdown(
@@ -498,7 +499,7 @@ def now_france_str(fmt: str = "%d/%m/%Y – %H:%M:%S") -> str:
         # 3) fallback très simple (approx.) : UTC+2 (été) / adaptez si besoin
         return (datetime.utcnow().replace(tzinfo=timezone.utc) + timedelta(hours=2)).strftime(fmt)
 
-inject_brand_css()
+#inject_brand_css()
 
 now = now_france_str()
 
@@ -1362,6 +1363,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
