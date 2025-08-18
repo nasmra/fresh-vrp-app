@@ -646,6 +646,7 @@ with tab_opt:
     # Chauffeurs indisponibles
     # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     # Chauffeurs indisponibles
+    # ---------- Chauffeurs indisponibles + remplaçants (temporaires même véhicule) ----------
     if chauff_file:
         chauff_file.seek(0)
         try:
@@ -656,7 +657,7 @@ with tab_opt:
             all_ch = [n for n in dfc["Nom Complet"].tolist() if n]
             unv_ch = unavail_multiselect("🚫 Chauffeurs indisponibles", all_ch, key="ch_unavail")
     
-            # Préparation des remplaçants
+            # Remplaçants
             selected_replacements = {}
     
             if "Statut" in dfc.columns and unv_ch:
@@ -671,7 +672,7 @@ with tab_opt:
                     for i, ch in enumerate(unv_ch):
                         veh = veh_by_name.get(ch, "")
     
-                        # Véhicule du titulaire indisponible → pas de proposition
+                        # Si le véhicule du titulaire est indisponible → message en BLANC/ROUGE
                         if veh in (unv_veh or []):
                             st.markdown(
                                 f"<div class='notice-white-red'>• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.</div>",
@@ -685,6 +686,7 @@ with tab_opt:
                         ].tolist()
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
     
+                        # Aucun temporaire dispo → message en BLANC/ROUGE (le cas que tu cites)
                         if not same_veh_temps:
                             st.markdown(
                                 f"<div class='notice-white-red'>• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.</div>",
@@ -692,6 +694,7 @@ with tab_opt:
                             )
                             continue
     
+                        # Sélecteur du remplaçant
                         options = ["— Aucun —"] + same_veh_temps
                         rep = st.selectbox(
                             f"Remplaçant pour **{ch}** (véhicule {veh})",
@@ -702,20 +705,15 @@ with tab_opt:
                         if rep != "— Aucun —":
                             selected_replacements[ch] = rep
                             already_taken.add(rep)
+    
                 else:
                     st.markdown(
                         "<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
                         unsafe_allow_html=True,
                     )
-            elif unv_ch:
-                st.markdown(
-                    "<div class='notice-white-red'>La colonne <b>Statut</b> est absente de la feuille 'Liste' — sélection des remplaçants impossible.</div>",
-                    unsafe_allow_html=True,
-                )
     
         finally:
             chauff_file.seek(0)
-
 
 
         # ------------------- Lancer l’optimisation -------------------
@@ -1375,6 +1373,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
