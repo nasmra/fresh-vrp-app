@@ -665,29 +665,33 @@ with tab_opt:
     
                 if not df_temp.empty:
                     st.markdown("#### 🤝 Remplaçants (temporaires **même véhicule**)")
-                    st.markdown('<div class="remp-scope">', unsafe_allow_html=True)  # <— OUVERTURE SCOPE
-                    
                     veh_by_name = dict(zip(dfc["Nom Complet"], dfc["Véhicule affecté"]))
                     already_taken = set()
-                    
+    
                     for i, ch in enumerate(unv_ch):
                         veh = veh_by_name.get(ch, "")
-                    
+    
                         # Véhicule du titulaire indisponible → pas de proposition
                         if veh in (unv_veh or []):
-                            st.info(f"• **{ch}** → véhicule **{veh}** indisponible : pas de remplaçant proposé.")
+                            st.markdown(
+                                f"<div class='notice-white-red'>• <b>{ch}</b> → véhicule <b>{veh}</b> indisponible : pas de remplaçant proposé.</div>",
+                                unsafe_allow_html=True,
+                            )
                             continue
-                    
+    
                         # Temporaires STRICTEMENT sur le même véhicule
                         same_veh_temps = df_temp.loc[
                             df_temp["Véhicule affecté"].astype(str) == str(veh), "Nom Complet"
                         ].tolist()
                         same_veh_temps = [t for t in same_veh_temps if t not in already_taken]
-                    
+    
                         if not same_veh_temps:
-                            st.info(f"• **{ch}** → aucun **temporaire** disponible sur le véhicule **{veh}**.")
+                            st.markdown(
+                                f"<div class='notice-white-red'>• <b>{ch}</b> → aucun <b>temporaire</b> disponible sur le véhicule <b>{veh}</b>.</div>",
+                                unsafe_allow_html=True,
+                            )
                             continue
-                    
+    
                         options = ["— Aucun —"] + same_veh_temps
                         rep = st.selectbox(
                             f"Remplaçant pour **{ch}** (véhicule {veh})",
@@ -698,12 +702,20 @@ with tab_opt:
                         if rep != "— Aucun —":
                             selected_replacements[ch] = rep
                             already_taken.add(rep)
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)  # <— FERMETURE SCOPE
-
+                else:
+                    st.markdown(
+                        "<div class='notice-white-red'>Aucun chauffeur temporaire dans la feuille 'Liste'.</div>",
+                        unsafe_allow_html=True,
+                    )
+            elif unv_ch:
+                st.markdown(
+                    "<div class='notice-white-red'>La colonne <b>Statut</b> est absente de la feuille 'Liste' — sélection des remplaçants impossible.</div>",
+                    unsafe_allow_html=True,
+                )
     
         finally:
             chauff_file.seek(0)
+
 
 
         # ------------------- Lancer l’optimisation -------------------
@@ -1363,6 +1375,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
