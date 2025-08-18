@@ -94,7 +94,7 @@ def inject_brand_css():
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
       /* ===== Alert custom lisible sur fond bleu ===== */
-      .notice-white-red {{ background:#fff !important; border:2px solid rgba(220,53,69,.60) !important; border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10); }}
+      .notice-white-red {{ background:#fff !important; border:2px solid rgba(255,255,255,.60) !important; border-radius:10px; padding:.75rem 1rem; color:#7a0c0c !important; box-shadow:0 6px 18px rgba(7,28,71,.10); }}
 
       /* ===== Boutons ===== */
       .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
@@ -1329,3 +1329,4 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
