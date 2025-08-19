@@ -318,7 +318,7 @@ def run_optimization(
 
     # pré-clustering
     use_preclustering: bool = True,
-    cluster_neighbors: int = 2,   # nb de véhicules autorisés par client (seed + voisins)
+    cluster_neighbors: int = 1,   # nb de véhicules autorisés par client (seed + voisins)
 ):
     # ---------- Lecture sources ----------
     dist_mat_raw = pd.read_excel(distance_file, index_col=0)
@@ -608,5 +608,6 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
 
