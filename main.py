@@ -115,7 +115,7 @@ def inject_brand_css():
       }}
       .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
-      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
+      .page-title {{ text-align:center; margin: 15px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
 
       /* ===== Cartes d’alerte Streamlit (surfaces blanches) ===== */
       .stApp .stAlert {{
@@ -1371,6 +1371,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
