@@ -152,13 +152,14 @@ def inject_brand_css():
       .stApp [data-testid="stSidebar"] h5,
       .stApp [data-testid="stSidebar"] h6,
       .stApp [data-testid="stSidebar"] label {{
-        color:#111 !important;   /* <- “📂 Données” devient noir */
+        color:#111 !important;
       }}
 
-
-      
+      /* ===== Utilitaires ===== */
+      .force-black, .force-black * {{ color:#111 !important; }}  /* -> pour forcer le noir dans un bloc précis */
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def alert_white_red(msg: str):
@@ -1496,6 +1497,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
