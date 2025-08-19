@@ -598,7 +598,7 @@ st.markdown("""
 # =========================================================
 #             CHARGEMENT AUTOMATIQUE DEPUIS DRIVE
 # =========================================================
-REQUIRED_KEYS = ["distances", "geocodage", "commandes", "vehicules", "chauffeurs"]
+REQUIRED_KEYS = ["distances", "geocodage", "vehicules", "chauffeurs"]
 
 def _to_buf(b: bytes) -> BytesIO:
     buf = BytesIO(b); buf.seek(0); return buf
@@ -610,17 +610,16 @@ def load_from_drive_into_session():
         st.error(f"Secrets manquants dans [drive]: {', '.join(missing)}")
         st.stop()
 
+    # Charge dist/geo/veh/chauff (obligatoires)
     filenames = {
         "dist":   drive_cfg["distances"],
         "geo":    drive_cfg["geocodage"],
-        "orders": drive_cfg["commandes"],
         "veh":    drive_cfg["vehicules"],
         "chauff": drive_cfg["chauffeurs"],
     }
-
     for key, name in filenames.items():
         try:
-            content = drive_download(name)  # <- ton helper existant
+            content = drive_download(name)
             st.session_state[f"{key}_buf"]  = _to_buf(content)
             st.session_state[f"{key}_name"] = name
         except Exception as e:
@@ -628,13 +627,26 @@ def load_from_drive_into_session():
             st.session_state[f"{key}_name"] = name
             st.sidebar.error(f"❌ Impossible de télécharger « {name} » depuis Drive : {e}")
 
+    # Commandes = optionnel : on n’échoue pas si absent
+    orders_name = drive_cfg.get("commandes")
+    st.session_state["orders_buf"]  = None
+    st.session_state["orders_name"] = orders_name
+    if orders_name:
+        try:
+            content = drive_download(orders_name)
+            st.session_state["orders_buf"] = _to_buf(content)
+        except Exception as e:
+            st.sidebar.info(f"ℹ️ Fichier commandes non chargé : {e}")
+
+
 # 1ère initialisation (une seule fois)
 if "initialized" not in st.session_state:
-    for k in ["dist","geo","orders","veh","chauff"]:
+    for k in ["dist","geo","veh","chauff","orders"]:
         st.session_state.setdefault(f"{k}_buf",  None)
         st.session_state.setdefault(f"{k}_name", None)
     load_from_drive_into_session()
     st.session_state.initialized = True
+
 
 # Accès rapide aux buffers (réutilisés dans les onglets)
 dist_file   = st.session_state.get("dist_buf")
@@ -657,8 +669,8 @@ else:
 st.sidebar.header("📂 Données")
 
 def _all_loaded():
-    return all(st.session_state.get(k) for k in
-               ["dist_buf","geo_buf","orders_buf","veh_buf","chauff_buf"])
+    return all(st.session_state.get(k) for k in ["dist_buf","geo_buf","veh_buf","chauff_buf"])
+
 
 if _all_loaded():
     st.sidebar.success("✅ Données chargées. Pour recharger, cliquez sur le bouton.")
@@ -669,6 +681,7 @@ if st.sidebar.button("🔄 Recharger depuis Drive"):
     load_from_drive_into_session()
     st.sidebar.success("✅ Données rechargées.")
     st.rerun()
+
 
 
 # ====================== ONGLETS PRINCIPAUX ======================
@@ -814,8 +827,10 @@ with tab_opt:
 
         # ------------------- Lancer l’optimisation -------------------
         if st.button("🚀 Lancer l'optimisation"):
-            if not all([orders_file, veh_file, chauff_file, dist_file, geo_file]):
+            if not all([veh_file, chauff_file, dist_file, geo_file]):
                 st.error("⚠️ Fichiers manquants sur Drive (voir panneau de gauche).")
+            elif not orders_file:
+                st.error("⚠️ Fichier de commandes manquant.")
             else:
                 # Construire la liste finale des chauffeurs à exclure
                 unv_ch_final = list(unv_ch)
@@ -1469,6 +1484,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
