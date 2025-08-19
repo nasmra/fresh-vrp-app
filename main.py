@@ -47,7 +47,7 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels en BLANC ===== */
+      /* ===== Titres & labels en BLANC (fond sombre) ===== */
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
       .stApp .stTextInput > label, .stApp .stNumberInput > label,
@@ -125,7 +125,7 @@ def inject_brand_css():
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
 
-      /* ===== NOTICE BLANCHE + TEXTE ROUGE ===== */
+      /* ===== Notice blanche + texte rouge ===== */
       .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
       .stApp .stMarkdown .notice-white-red,
       .stApp .markdown-text-container .notice-white-red {{
@@ -136,18 +136,24 @@ def inject_brand_css():
         box-shadow:0 6px 18px rgba(7,28,71,.10);
         color:#dc2626 !important;
         display:block;
-        margin:10px 0 24px !important;   /* espace AVANT le bouton */
+        margin:10px 0 24px !important;
       }}
       .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
       .stApp .stMarkdown .notice-white-red *,
-      .stApp .markdown-text-container .notice-white-red * {{
-        color:#dc2626 !important;
-      }}
+      .stApp .markdown-text-container .notice-white-red * {{ color:#dc2626 !important; }}
 
-      /* ===== Séparateur supplémentaire pour le premier bouton après la notice ===== */
-      .stApp .notice-white-red + div {{ margin-top: 8px !important; }}
-      .stApp .notice-white-red + div:has(.stButton>button) {{ margin-top: 12px !important; }}
-      .stApp .notice-white-red + div .stButton>button {{ margin-top: 8px !important; }}
+      /* ===== Sidebar – forcer le texte (titres/markdown) en NOIR ===== */
+      .stApp [data-testid="stSidebar"] .stMarkdown,
+      .stApp [data-testid="stSidebar"] .markdown-text-container,
+      .stApp [data-testid="stSidebar"] h1,
+      .stApp [data-testid="stSidebar"] h2,
+      .stApp [data-testid="stSidebar"] h3,
+      .stApp [data-testid="stSidebar"] h4,
+      .stApp [data-testid="stSidebar"] h5,
+      .stApp [data-testid="stSidebar"] h6,
+      .stApp [data-testid="stSidebar"] label {{
+        color:#111 !important;   /* <- “📂 Données” devient noir */
+      }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -1376,6 +1382,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
