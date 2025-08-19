@@ -689,6 +689,7 @@ tab_opt, tab_add, tab_drivers = st.tabs([
 with tab_opt:
     st.subheader("Paramètres d'optimisation")
     # --------- Source commandes : import local prioritaire ----------
+
     with st.expander("📥 Importer le fichier de commandes du jour (xlsx/csv)", expanded=True):
         up = st.file_uploader(
             "Glissez-déposez ou cliquez pour sélectionner votre fichier (.xlsx, .xls, .csv)",
@@ -696,20 +697,11 @@ with tab_opt:
             key="orders_upload",
             help="Colonnes attendues : Code client, Libellé, Quantité, Unité, Adresse, Code postal, Ville",
         )
-        cols_u1, cols_u2 = st.columns([2,1])
-        with cols_u1:
-            src = "📎 Import local" if st.session_state.get("orders_source") == "upload" else f"Drive : {st.session_state.get('orders_name') or st.secrets['drive'].get('commandes','(non défini)')}"
-            st.caption(f"**Source actuelle des commandes** : {src}")
-        with cols_u2:
-            if st.button("↩️ Revenir aux commandes Drive"):
-                try:
-                    b = drive_download(st.secrets["drive"]["commandes"])
-                    st.session_state["orders_buf"] = _to_buf(b)
-                    st.session_state["orders_name"] = st.secrets["drive"]["commandes"]
-                    st.session_state["orders_source"] = "drive"
-                    st.success("Revenu au fichier Drive.")
-                except Exception as e:
-                    st.error(f"Impossible de recharger depuis Drive : {e}")
+    
+        # (Optionnel) Indiquer la source actuelle ; supprime ces 2 lignes si tu ne veux rien afficher
+        src = "📎 Import local" if st.session_state.get("orders_source") == "upload" \
+              else f"Drive : {st.session_state.get('orders_name') or st.secrets['drive'].get('commandes','(non défini)')}"
+        st.caption(f"**Source actuelle des commandes** : {src}")
     
         if up is not None:
             try:
@@ -722,16 +714,13 @@ with tab_opt:
                     st.session_state["orders_buf"] = buf
                     st.session_state["orders_name"] = up.name
                     st.session_state["orders_source"] = "upload"
-                    st.success(f"✅ « {up.name} » importé. Il sera utilisé pour l'optimisation (prioritaire sur Drive).")
-                    # aperçu (sans casser le buffer)
+                    st.success(f"✅ « {up.name} » importé. Il sera utilisé pour l'optimisation.")
                     buf.seek(0)
-                    try:
-                        df_head = pd.read_excel(buf).head(10)
-                        st.dataframe(df_head, use_container_width=True)
-                    finally:
-                        buf.seek(0)
+                    st.dataframe(pd.read_excel(buf).head(10), use_container_width=True)
+                    buf.seek(0)
             except Exception as e:
                 st.error(f"Échec import : {e}")
+
 
     # Indisponibilités
     unv_veh, unv_ch = [], []
@@ -1480,6 +1469,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
