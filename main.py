@@ -747,10 +747,7 @@ with tab_opt:
             help="Colonnes attendues : Code client, Libellé, Quantité, Unité, Adresse, Code postal, Ville",
         )
     
-        # (Optionnel) Indiquer la source actuelle ; supprime ces 2 lignes si tu ne veux rien afficher
-        src = "📎 Import local" if st.session_state.get("orders_source") == "upload" \
-              else f"Drive : {st.session_state.get('orders_name') or st.secrets['drive'].get('commandes','(non défini)')}"
-        st.caption(f"**Source actuelle des commandes** : {src}")
+
     
         if up is not None:
             try:
@@ -1526,6 +1523,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
