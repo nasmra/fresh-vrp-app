@@ -291,7 +291,8 @@ def run_optimization(
     pairs = [p for p in pairs if p["Véhicule affecté"] in veh_dict]
     if not pairs:
         return "Aucun véhicule trouvable pour les chauffeurs retenus.", None
-
+    # 🔒 NOUVEAU : ordre déterministe (évite que l’heuristique change selon l’ordre d’entrée)
+    pairs.sort(key=lambda p: (str(p["Véhicule affecté"]), str(p["Nom Complet"])))
     # ---------- Demandes ----------
     orders["Code postal"]      = orders["Code postal"].astype(str).str.split(".").str[0]
     orders["Adresse complète"] = orders["Adresse"] + ", " + orders["Code postal"] + ", " + orders["Ville"]
@@ -384,8 +385,16 @@ def run_optimization(
     routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
 
     params = pywrapcp.DefaultRoutingSearchParameters()
-    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+    # Meilleure solution initiale pour VRP multi-véhicules
+    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
+    # Métaheuristique pour sortir des optima locaux
+    params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+    # Temps de recherche
     params.time_limit.seconds = int(time_limit_s)
+    # Reproductibilité
+    params.random_seed = 42
+    # params.log_search = True  # (optionnel) pour diagnostiquer dans la console
+
 
     solution = routing.SolveWithParameters(params)
     if not solution:
@@ -476,3 +485,4 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
