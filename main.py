@@ -158,39 +158,31 @@ def inject_brand_css():
       /* ===== Utilitaires ===== */
       .force-black, .force-black * {{ color:#111 !important; }}
 
-      /* ===== Spinner lisible en BLANC (+ fallback) ===== */
-      /* 1) forcer la couleur si l'icône suit currentColor */
-      .stApp [data-testid="stSpinner"] {{ color:{light_text} !important; }}
-      .stApp [data-testid="stSpinner"] svg {{ stroke:{light_text} !important; fill:{light_text} !important; }}
-      .stApp [data-testid="stSpinner"] svg * {{ stroke:{light_text} !important; fill:{light_text} !important; }}
-
-      /* 2) BaseWeb spinner éventuel */
+      /* ===== Spinner : texte BLANC + icône ORANGE et PLUS GRANDE ===== */
+      .stApp [data-testid="stSpinner"] {{
+        color:{light_text} !important;      /* texte */
+        display:inline-flex !important;
+        align-items:center; gap:10px;
+      }}
+      /* Icône spinner (SVG ou BaseWeb) → orange + taille */
+      .stApp [data-testid="stSpinner"] svg,
       .stApp [data-testid="stSpinner"] [data-baseweb="spinner"],
       .stApp [data-testid="stSpinner"] [data-baseweb="spinner"] * {{
-        color:{light_text} !important; fill:{light_text} !important; stroke:{light_text} !important;
+        width:22px !important;
+        height:22px !important;
+        color:{brand_orange} !important;
+        fill:{brand_orange} !important;
+        stroke:{brand_orange} !important;
       }}
-
-      /* 3) Fallback : cacher l’icône d’origine et afficher un spinner CSS blanc */
-      .stApp [data-testid="stSpinner"] {{
-        display:inline-flex !important; align-items:center; gap:8px;
+      /* Si le spinner est un anneau en CSS (borders), teinte l’anneau */
+      .stApp [data-testid="stSpinner"] [class*="Spinner"]::before,
+      .stApp [data-testid="stSpinner"] [class*="spinner"]::before {{
+        border-width:3px !important;
+        border-color: rgba(247,148,29,.35) !important;
+        border-top-color:{brand_orange} !important;
       }}
-      .stApp [data-testid="stSpinner"] svg,
-      .stApp [data-testid="stSpinner"] .stSpinner,
-      .stApp [data-testid="stSpinner"] [class*="spinner"] {{
-        display:none !important;
-      }}
-      .stApp [data-testid="stSpinner"]::before {{
-        content:""; width:14px; height:14px;
-        border:2px solid rgba(255,255,255,.35);
-        border-top-color:{light_text};
-        border-radius:50%;
-        animation:fd-spin .9s linear infinite;
-      }}
-      @keyframes fd-spin {{ to {{ transform: rotate(360deg); }} }}
     </style>
     """, unsafe_allow_html=True)
-
-
 
 
 def alert_white_red(msg: str):
@@ -1528,6 +1520,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
