@@ -889,7 +889,8 @@ with tab_opt:
                     else:
                         st.session_state.result      = result
                         st.session_state.output_xlsx = out_xl
-
+                    # quand c'est fini
+                    ph.empty()
         # ===== Résultats + MàJ Chauffeurs + PDF + Carte =====
         if st.session_state.get("result"):
             st.success("✅ Optimisation terminée")
@@ -1522,6 +1523,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
