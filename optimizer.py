@@ -78,7 +78,7 @@ def adjust_vehicle_capacities(vehicles):
 
     vehicles = vehicles.copy()
     base = pd.to_numeric(vehicles.get("Poids (kg)"), errors="coerce").fillna(0)
-    # IMPORTANT : Series par défaut pour éviter .apply sur int
+    # Series par défaut pour éviter .apply sur int
     extra_series = vehicles.get(
         "Informations supplémentaires",
         pd.Series(0, index=vehicles.index)
@@ -327,7 +327,7 @@ def run_optimization(
                     pairs.append({"Nom Complet": nm, "Véhicule affecté": v})
                     already.add(nm)
 
-    # filtre véhicules indispo
+    # véhicules indispo → filtre défensif
     pairs = [p for p in pairs if _norm_space(p["Véhicule affecté"]) not in unv_vh_set]
     if not pairs:
         return "Aucun chauffeur disponible après filtrage.", None
@@ -337,7 +337,7 @@ def run_optimization(
     veh_dict = vehs.set_index("Véhicule").to_dict("index")
     cartons_col = next((c for c in vehs.columns if re.search(r"\bcartons?\b", str(c), flags=re.I)), None)
 
-    # ne garder que les paires avec véhicule connu
+    # garder seulement les pairs ayant des capacités connues
     pairs = [p for p in pairs if p["Véhicule affecté"] in veh_dict]
     if not pairs:
         return "Aucun véhicule trouvable pour les chauffeurs retenus.", None
@@ -414,7 +414,7 @@ def run_optimization(
     vehicle_weights = [cap_w_scaled(v) for v in range(len(pairs))]
     vehicle_cartons = [cap_c_scaled(v) for v in range(len(pairs))]
 
-    # ---------- Builder + Solve (enveloppe pour tenter, avec ou sans contrainte "1 visite") ----------
+    # ---------- Builder + Solve ----------
     def _build_and_solve(enforce_one_tour: bool):
         data = {
             "cost_int": cost_int,
@@ -458,25 +458,31 @@ def run_optimization(
             vis_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: 0 if mgr.IndexToNode(i) == 0 else 1)
             routing.AddDimensionWithVehicleCapacity(vis_cb_idx, 0, [10**9]*data["num_vehicles"], True, "Visits")
             vis_dim = routing.GetDimensionOrDie("Visits")
-            # impose au moins 1 visite par route
             for v in range(data["num_vehicles"]):
                 vis_dim.CumulVar(routing.End(v)).SetMin(1)
 
-        # Recherche — multithread + opérateurs
+        # Recherche — multithread + opérateurs (compat protégée)
         params = pywrapcp.DefaultRoutingSearchParameters()
         params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
         params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
         params.time_limit.seconds = int(time_limit_s)
         params.log_search = False
-        params.random_seed = 42
+        # Seed (si dispo dans ta version)
+        try:
+            params.random_seed = 42
+        except Exception:
+            pass
+        # Workers (si dispo)
         try:
             params.num_search_workers = max(1, os.cpu_count() or 1)
         except Exception:
             pass
+        # Neighbors ratio (si dispo)
         try:
             params.first_solution_neighbors_ratio = 0.2
         except Exception:
             pass
+        # Opérateurs locaux (si dispo)
         try:
             ops = params.local_search_operators
             ops.use_relocate = routing_enums_pb2.BOOL_TRUE
@@ -494,7 +500,7 @@ def run_optimization(
     # 1) tenter avec contrainte dure "1 visite"
     solution, routing, mgr, data = _build_and_solve(enforce_one_tour=require_one_tour)
 
-    # 2) si échec et qu'on avait imposé "1 visite", relâcher proprement et on remplira via redistribution
+    # 2) si échec et qu'on avait imposé "1 visite", relâcher puis remplir par redistribution forcée
     if not solution and require_one_tour:
         solution, routing, mgr, data = _build_and_solve(enforce_one_tour=False)
 
@@ -525,7 +531,6 @@ def run_optimization(
 
     # ---------- Redistribution (si besoin) ----------
     if require_one_tour:
-        # assure au moins 1 client par chauffeur même si la contrainte a été relâchée
         if any(len(r["seq"]) == 0 for r in routes):
             routes = _redistribute_net_gain(
                 routes,
