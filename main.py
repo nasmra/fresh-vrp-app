@@ -1439,11 +1439,6 @@ def _logout():
     st.rerun()
 
 def require_login(idle_timeout_min: int | None = None):
-    """
-    Protège l'app par mot de passe.
-    - Le mot de passe est lu dans st.secrets['app']['password'] ou APP_PASSWORD.
-    - idle_timeout_min : déconnexion auto après X minutes d'inactivité (None pour désactiver).
-    """
     PASSWORD = st.secrets.get("app", {}).get("password") or os.environ.get("APP_PASSWORD")
 
     # Déjà authentifié ?
@@ -1457,26 +1452,27 @@ def require_login(idle_timeout_min: int | None = None):
             else:
                 st.session_state["last_activity"] = now
 
-        # Bouton "Se déconnecter" (sidebar)
-        if st.sidebar.button("🔓 Se déconnecter", use_container_width=True):
+        # 🔑 clé unique pour éviter les doublons si la fonction est appelée 2x
+        if st.sidebar.button("🔓 Se déconnecter", key="btn_logout_sidebar", use_container_width=True):
             _logout()
-        return  # laisser le reste de l'app s'exécuter
+        return
 
-    # Écran de connexion (si non authentifié)
+    # Écran de connexion
     st.title("🔐 Accès protégé")
-
-
     with st.form("login_form"):
-        pwd = st.text_input("Mot de passe", type="password")
-        ok = st.form_submit_button("Entrer")
+        pwd = st.text_input("Mot de passe", type="password", key="pwd_login")
+        ok = st.form_submit_button("Entrer", use_container_width=False, key="btn_login_submit")
+
     if ok:
         if PASSWORD and pwd == PASSWORD:
             st.session_state.auth = True
             st.session_state.last_activity = time.time()
-            st.rerun()  # recharge l’UI immédiatement
+            st.rerun()
         else:
             st.error("Mot de passe incorrect")
+
     st.stop()
+
 # ============================================
 
 # 👉 Appelle l’auth AVANT d’afficher l’UI
@@ -2632,6 +2628,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
