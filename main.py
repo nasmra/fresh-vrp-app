@@ -867,7 +867,15 @@ with tab_opt:
                 with st.spinner("Optimisation en cours…"):
                     st.session_state.dist_buf.seek(0)
                     orders_file.seek(0); veh_file.seek(0); chauff_file.seek(0)
-
+                    ph = st.empty()
+                    ph.markdown("""
+                    <div class="fd-wip">
+                      <svg class="fd-ico" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 2h12v3a6 6 0 0 1-2.2 4.7L13 12l2.8 2.3A6 6 0 0 1 18 19v3H6v-3a6 6 0 0 1 2.2-4.7L11 12 8.2 9.7A6 6 0 0 1 6 5V2zM8 4v1c0 1.4.6 2.7 1.7 3.6L12 10l2.3-1.4A4.6 4.6 0 0 0 16 5V4H8zm8 16v-1c0-1.4-.6-2.7-1.7-3.6L12 14l-2.3 1.4A4.6 4.6 0 0 0 8 19v1h8z"/>
+                      </svg>
+                      Optimisation en cours…
+                    </div>
+                    """, unsafe_allow_html=True)
                     result, out_xl = run_optimization(
                         st.session_state.dist_buf,
                         orders_file, veh_file, chauff_file,
@@ -1514,6 +1522,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
