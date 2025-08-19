@@ -601,8 +601,9 @@ st.markdown("---")
 st.markdown("""
 **Mode d'emploi :**
 - Les fichiers sont **chargés automatiquement depuis Google Drive** au lancement.
-- **Optimiser** : onglet **🚚 Optimisation** → *Lancer l'optimisation* (**distance**).
+- **Optimiser** : onglet **🚚 Optimisation** → *Importer les commandes* → *Lancer l'optimisation* (**distance**).
 - **Ajouter un client** : onglet **➕ Ajouter un client** → matrice & géocodage mis à jour **sur Drive**.
+- **Gestion des chauffeurs** : onglet **👷 Gestion des chauffeurs** → *Ajouter ou Supprmier*.
 """)
 
 # =========================================================
@@ -1523,6 +1524,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
