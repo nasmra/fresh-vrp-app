@@ -1015,10 +1015,16 @@ with tab_opt:
                         vehs = sorted({t["vehicle"] for t in assigned_map if t["chauffeur"] == sel_ch})
                         if vehs:
                             st.markdown(
-                                f"<div style='margin-top:6px;padding:8px 10px;border-left:4px solid #0ea5e9;background:#f0f9ff'>"
-                                f"<b>Véhicule utilisé :</b> {', '.join(vehs)}</div>",
+                                f"""
+                                <div style="margin-top:6px;padding:8px 10px;border-left:4px solid #0ea5e9;
+                                            background:#f0f9ff;color:#111 !important;">
+                                  <span style="font-weight:700;color:#111 !important;">Véhicule utilisé :</span>
+                                  {', '.join(vehs)}
+                                </div>
+                                """,
                                 unsafe_allow_html=True
                             )
+
 
                     filtered = [t for t in assigned_map if sel_ch == "Tous" or t["chauffeur"] == sel_ch]
 
@@ -1487,6 +1493,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
