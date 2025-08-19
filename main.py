@@ -47,7 +47,7 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels en BLANC (fond sombre) ===== */
+      /* ===== Titres & labels en BLANC ===== */
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
       .stApp .stTextInput > label, .stApp .stNumberInput > label,
@@ -115,7 +115,7 @@ def inject_brand_css():
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
 
-      /* ===== Cartes d’alerte (surfaces blanches) ===== */
+      /* ===== Cartes d’alerte ===== */
       .stApp .stAlert {{
         background:#fff !important;
         border:1px solid rgba(12,61,145,.25) !important;
@@ -125,24 +125,7 @@ def inject_brand_css():
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
 
-      /* ===== Notice blanche + texte rouge ===== */
-      .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
-      .stApp .stMarkdown .notice-white-red,
-      .stApp .markdown-text-container .notice-white-red {{
-        background:#fff !important;
-        border:2px solid #dc2626 !important;
-        border-radius:10px;
-        padding:.75rem 1rem;
-        box-shadow:0 6px 18px rgba(7,28,71,.10);
-        color:#dc2626 !important;
-        display:block;
-        margin:10px 0 24px !important;
-      }}
-      .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
-      .stApp .stMarkdown .notice-white-red *,
-      .stApp .markdown-text-container .notice-white-red * {{ color:#dc2626 !important; }}
-
-      /* ===== Sidebar – textes en NOIR ===== */
+      /* ===== Sidebar en NOIR ===== */
       .stApp [data-testid="stSidebar"] .stMarkdown,
       .stApp [data-testid="stSidebar"] .markdown-text-container,
       .stApp [data-testid="stSidebar"] h1,
@@ -151,44 +134,32 @@ def inject_brand_css():
       .stApp [data-testid="stSidebar"] h4,
       .stApp [data-testid="stSidebar"] h5,
       .stApp [data-testid="stSidebar"] h6,
-      .stApp [data-testid="stSidebar"] label {{
-        color:#111 !important;
-      }}
+      .stApp [data-testid="stSidebar"] label {{ color:#111 !important; }}
 
       /* ===== Utilitaires ===== */
-      .force-black, .force-black * {{ color:#111 !important; }}
+      .force-black, .force-black * {{ color:#111 !important; }}   /* forcer le noir localement */
+      .fd-status {{ color:#fff !important; font-weight:600; margin:4px 0 6px; }}  /* statut blanc au-dessus du progress */
 
-      /* ===== Spinner lisible en BLANC (+ fallback) ===== */
-      /* 1) forcer la couleur si l'icône suit currentColor */
-      .stApp [data-testid="stSpinner"] {{ color:{light_text} !important; }}
-      .stApp [data-testid="stSpinner"] svg {{ stroke:{light_text} !important; fill:{light_text} !important; }}
-      .stApp [data-testid="stSpinner"] svg * {{ stroke:{light_text} !important; fill:{light_text} !important; }}
+      /* ===== Sabliers personnalisés + masquage du spinner Streamlit ===== */
+      .stApp [data-testid="stSpinner"] {{ display:none !important; }}
 
-      /* 2) BaseWeb spinner éventuel */
-      .stApp [data-testid="stSpinner"] [data-baseweb="spinner"],
-      .stApp [data-testid="stSpinner"] [data-baseweb="spinner"] * {{
-        color:{light_text} !important; fill:{light_text} !important; stroke:{light_text} !important;
+      .fd-wip {{
+        display:inline-flex; align-items:center; gap:.6rem;
+        color:{light_text} !important; font-weight:600;
       }}
-
-      /* 3) Fallback : cacher l’icône d’origine et afficher un spinner CSS blanc */
-      .stApp [data-testid="stSpinner"] {{
-        display:inline-flex !important; align-items:center; gap:8px;
+      .fd-wip .fd-ico {{
+        width:24px; height:24px; color:{brand_orange};
+        fill:currentColor; stroke:currentColor; 
+        animation: fd-flip 1.1s linear infinite;
       }}
-      .stApp [data-testid="stSpinner"] svg,
-      .stApp [data-testid="stSpinner"] .stSpinner,
-      .stApp [data-testid="stSpinner"] [class*="spinner"] {{
-        display:none !important;
+      @keyframes fd-flip {{
+        0%   {{ transform: rotate(0deg);   }}
+        50%  {{ transform: rotate(180deg); }}
+        100% {{ transform: rotate(360deg); }}
       }}
-      .stApp [data-testid="stSpinner"]::before {{
-        content:""; width:14px; height:14px;
-        border:2px solid rgba(255,255,255,.35);
-        border-top-color:{light_text};
-        border-radius:50%;
-        animation:fd-spin .9s linear infinite;
-      }}
-      @keyframes fd-spin {{ to {{ transform: rotate(360deg); }} }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def alert_white_red(msg: str):
@@ -1449,30 +1420,30 @@ with tab_add:
             new_geo = {"Adresse": addr, "Code (tiers)": code, "Latitude": lat, "Longitude": lon}
             df_geo = pd.concat([df_geo, pd.DataFrame([new_geo])], ignore_index=True)
             df_geo["Code (tiers)"].fillna("FRESH DISTRIB", inplace=True)
-
+            
             # --- Calcul des distances OSRM ---
-            coords = {r["Code (tiers)"]:(r["Longitude"], r["Latitude"]) for _, r in df_geo.iterrows()}
-
+            coords = {r["Code (tiers)"]: (r["Longitude"], r["Latitude"]) for _, r in df_geo.iterrows()}
+            
             def route(o, d):
                 url = f"http://router.project-osrm.org/route/v1/driving/{o[0]},{o[1]};{d[0]},{d[1]}"
                 r = requests.get(url); r.raise_for_status()
                 rt = r.json().get("routes")
                 return ((rt[0]["distance"]/1000, rt[0]["duration"]/60) if rt else (0, 0))
-
+            
             fw, bw, errors = {}, {}, 0
             total = len(coords)
-
-            # Place les logs/progression sous le formulaire (colonne gauche)
+            
+            # UI : ligne de statut BLANCHE + barre de progression sans label
             with col_left:
-                prog = st.progress(0, text="Initialisation…")
-                # Message rouge d'avertissement
+                status = st.empty()                   # ligne "Calcul x/y : ..." en blanc
+                prog   = st.progress(0)               # pas de text= (pour éviter le label noir)
                 st.markdown(
-                    "<span style='color:red; font-weight:bold;'>⚠️ Calcul des distances en cours… veuillez patienter et ne pas fermer ou recharger la page.</span>",
-                    unsafe_allow_html=True
+                    "<span style='color:red; font-weight:bold;'>"
+                    "⚠️ Calcul des distances en cours… veuillez patienter et ne pas fermer ou recharger la page."
+                    "</span>", unsafe_allow_html=True
                 )
-                log  = st.empty()
-
-
+                log = st.empty()
+            
             for idx, (c, (clon, clat)) in enumerate(coords.items(), start=1):
                 try:
                     if c == code:
@@ -1481,10 +1452,15 @@ with tab_add:
                         d1, t1 = route((lon, lat), (clon, clat)); time.sleep(0.2)
                         d2, t2 = route((clon, clat), (lon, lat)); time.sleep(0.2)
                         fw[c], bw[c] = (d1, t1), (d2, t2)
-
+            
                     pct = int(idx / total * 100)
                     with col_left:
-                        prog.progress(pct, text=f"Calcul {idx}/{total} : {code} ↔ {c} …")
+                        status.markdown(
+                            f"<div class='fd-status'>Calcul {idx}/{total} : "
+                            f"<code>{code}</code> ↔ <code>{c}</code> …</div>",
+                            unsafe_allow_html=True
+                        )
+                        prog.progress(pct)
                         log.markdown(
                             f"- `{code}→{c}` : **{fw[c][0]:.2f} km** / {fw[c][1]:.0f} min  |  "
                             f"`{c}→{code}` : **{bw[c][0]:.2f} km** / {bw[c][1]:.0f} min"
@@ -1494,15 +1470,21 @@ with tab_add:
                     fw[c] = fw.get(c, (0, 0))
                     bw[c] = bw.get(c, (0, 0))
                     with col_left:
-                        prog.progress(int(idx / total * 100), text=f"⚠️ Erreur sur {c} (continuer)…")
+                        status.markdown(
+                            f"<div class='fd-status'>⚠️ Erreur sur <code>{c}</code> (continuer)…</div>",
+                            unsafe_allow_html=True
+                        )
+                        prog.progress(int(idx / total * 100))
                         log.warning(f"Erreur {code}↔{c} : {e}")
-
+            
             with col_left:
                 prog.empty()
+                status.empty()
                 if errors:
                     st.warning(f"Terminé avec {errors} échec(s).")
                 else:
                     st.success("Calcul des distances & durées terminé.")
+
 
             # --- Mise à jour de la matrice ---
             df_mat[code] = [f"{fw[k][0]:.2f} km / {fw[k][1]:.2f} min" for k in df_mat.index]
@@ -1523,6 +1505,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
