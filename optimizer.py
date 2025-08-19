@@ -165,11 +165,10 @@ def _redistribute_to_fill_empty_routes(routes, demands_map, cartons_map, nodes, 
         for donor in nonempty:
             if not donor["seq"]:
                 continue
-            # candidats (lourds d'abord)
+            # candidats (PROCHE d'abord)
             cand_sorted = sorted(
                 donor["seq"],
-                key=lambda c: (demands_map.get(c, 0.0), cartons_map.get(c, 0.0)),
-                reverse=True
+                key=lambda cli: _compute_route_distance_km([cli] + empty["seq"], nodes, km_matrix)
             )
             moved = False
             for cli in cand_sorted:
@@ -291,13 +290,7 @@ def run_optimization(
     pairs = [p for p in pairs if p["Véhicule affecté"] in veh_dict]
     if not pairs:
         return "Aucun véhicule trouvable pour les chauffeurs retenus.", None
-    
-    # 🔒 Ordre déterministe pour stabiliser l'heuristique
-    pairs.sort(key=lambda p: (str(p["Véhicule affecté"]), str(p["Nom Complet"])))
 
-
-
-    
     # ---------- Demandes ----------
     orders["Code postal"]      = orders["Code postal"].astype(str).str.split(".").str[0]
     orders["Adresse complète"] = orders["Adresse"] + ", " + orders["Code postal"] + ", " + orders["Ville"]
@@ -390,26 +383,12 @@ def run_optimization(
     routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
 
     params = pywrapcp.DefaultRoutingSearchParameters()
-    
-    # Meilleure solution initiale pour VRP multi-véhicules
-    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
-    
-    # Métaheuristique pour sortir des optima locaux
+    # Un démarrage "cluster-first" implicite
+    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.SAVINGS
+    # Vraie amélioration locale avec pénalités GLS (élimine beaucoup de croisements)
     params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    
-    # Temps de recherche
     params.time_limit.seconds = int(time_limit_s)
-    
-    # Reproductibilité (si dispo dans ta version)
-    try:
-        params.random_seed = 42
-    except AttributeError:
-        # Anciennes versions : ce champ n’existe pas -> on ignore
-        pass
-    
-    # (optionnel) logs pour debug
-    # params.log_search = True
-
+    params.log_search = False  # True si tu veux tracer
 
 
     solution = routing.SolveWithParameters(params)
@@ -501,5 +480,3 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
-
-
