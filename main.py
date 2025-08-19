@@ -54,8 +54,6 @@ def inject_brand_css():
       .stApp .stDateInput > label, .stApp .stTextArea > label,
       .stApp .stSlider > label, .stApp .stRadio > label,
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
-
-      /* ===== Markdown par défaut lisible sur fond sombre ===== */
       .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
 
       /* ===== Sélecteurs ===== */
@@ -117,7 +115,7 @@ def inject_brand_css():
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
 
-      /* ===== Cartes d’alerte Streamlit (surfaces blanches) ===== */
+      /* ===== Cartes d’alerte (surfaces blanches) ===== */
       .stApp .stAlert {{
         background:#fff !important;
         border:1px solid rgba(12,61,145,.25) !important;
@@ -127,7 +125,7 @@ def inject_brand_css():
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
 
-      /* ===== Helper notice-white-red : FOND BLANC + TEXTE ROUGE + ESPACE SOUS LE CADRE ===== */
+      /* ===== NOTICE BLANCHE + TEXTE ROUGE ===== */
       .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
       .stApp .stMarkdown .notice-white-red,
       .stApp .markdown-text-container .notice-white-red {{
@@ -137,16 +135,22 @@ def inject_brand_css():
         padding:.75rem 1rem;
         box-shadow:0 6px 18px rgba(7,28,71,.10);
         color:#dc2626 !important;
-        margin:8px 0 16px !important;   /* <-- espace sous l’alerte */
         display:block;
+        margin:10px 0 24px !important;   /* espace AVANT le bouton */
       }}
       .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
       .stApp .stMarkdown .notice-white-red *,
       .stApp .markdown-text-container .notice-white-red * {{
-        color:#dc2626 !important;       /* enfants aussi en rouge */
+        color:#dc2626 !important;
       }}
+
+      /* ===== Séparateur supplémentaire pour le premier bouton après la notice ===== */
+      .stApp .notice-white-red + div {{ margin-top: 8px !important; }}
+      .stApp .notice-white-red + div:has(.stButton>button) {{ margin-top: 12px !important; }}
+      .stApp .notice-white-red + div .stButton>button {{ margin-top: 8px !important; }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def alert_white_red(msg: str):
@@ -1372,6 +1376,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
