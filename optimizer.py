@@ -262,9 +262,9 @@ def run_optimization(
 
     # réglages vitesse/qualité
     speed_profile: str = "fast",  # "fast" | "balanced" | "best"
-    time_limit_s: int = 60,       # conseillé: fast=60, balanced=120, best=300
-    balance_span: bool = False,   # False = plus rapide (pas de dimension Distance)
-    span_coeff: int = 10          # si balance_span=True (0..50)
+    time_limit_s: int = 120,       # conseillé: fast=60, balanced=120, best=300
+    balance_span: bool = True,   # False = plus rapide (pas de dimension Distance)
+    span_coeff: int = 50          # si balance_span=True (0..50)
 ):
     # ---------- Lecture sources ----------
     dist_mat_raw = pd.read_excel(distance_file, index_col=0)
@@ -541,3 +541,4 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
