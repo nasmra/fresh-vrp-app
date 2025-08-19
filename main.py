@@ -157,6 +157,11 @@ def inject_brand_css():
 
       /* ===== Utilitaires ===== */
       .force-black, .force-black * {{ color:#111 !important; }}  /* -> pour forcer le noir dans un bloc précis */
+              /* ===== Spinner (st.spinner) : texte + icône en blanc sur fond sombre ===== */
+      .stApp [data-testid="stSpinner"] { color:#fff !important; }
+      .stApp [data-testid="stSpinner"] * { color:#fff !important; }
+      .stApp [data-testid="stSpinner"] svg { stroke:#fff !important; fill:#fff !important; }
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -1497,6 +1502,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
