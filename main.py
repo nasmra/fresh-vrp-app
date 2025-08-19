@@ -154,6 +154,11 @@ def inject_brand_css():
       .stApp [data-testid="stSidebar"] label {{
         color:#111 !important;   /* <- “📂 Données” devient noir */
       }}
+
+    /* ===== Utilitaires ===== */
+    .force-black, .force-black * { color:#111 !important; }
+
+      
     </style>
     """, unsafe_allow_html=True)
 
@@ -173,7 +178,7 @@ def unavail_multiselect(label, options, key=None, **kwargs):
 
 
 
-inject_brand_css()
+#inject_brand_css()
 
 # =================== Auth ===================
 def _logout():
@@ -562,7 +567,7 @@ def now_france_str(fmt: str = "%d/%m/%Y – %H:%M:%S") -> str:
         # 3) fallback très simple (approx.) : UTC+2 (été) / adaptez si besoin
         return (datetime.utcnow().replace(tzinfo=timezone.utc) + timedelta(hours=2)).strftime(fmt)
 
-inject_brand_css()
+#inject_brand_css()
 
 now = now_france_str()
 
@@ -1016,14 +1021,14 @@ with tab_opt:
                         if vehs:
                             st.markdown(
                                 f"""
-                                <div style="margin-top:6px;padding:8px 10px;border-left:4px solid #0ea5e9;
-                                            background:#f0f9ff;color:#111 !important;">
-                                  <span style="font-weight:700;color:#111 !important;">Véhicule utiliséxx :</span>
-                                  {', '.join(vehs)}
+                                <div class="force-black"
+                                     style="margin-top:6px;padding:8px 10px;border-left:4px solid #0ea5e9;background:#f0f9ff;">
+                                  <span style="font-weight:700;">Véhicule utilisé :</span> {', '.join(vehs)}
                                 </div>
                                 """,
                                 unsafe_allow_html=True
                             )
+                    
 
 
                     filtered = [t for t in assigned_map if sel_ch == "Tous" or t["chauffeur"] == sel_ch]
@@ -1493,6 +1498,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
