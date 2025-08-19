@@ -261,7 +261,7 @@ def run_optimization(
     unavailable_chauffeurs=None,
 
     balance_span: bool = True,   # équilibrage des distances
-    span_coeff: int = 5,        # 0..200 (baisser pour routes plus compactes)
+    span_coeff: int = 8,        # 0..200 (baisser pour routes plus compactes)
     time_limit_s: int = 300      # temps de recherche
 ):
     # ---------- Lecture sources ----------
@@ -536,6 +536,7 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
 
 
