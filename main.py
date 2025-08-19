@@ -171,17 +171,7 @@ def inject_brand_css():
       .stApp .markdown-text-container .notice-white-red * {{ color:#dc2626 !important; }}
 
       /* ===== Sidebar – forcer le texte (titres/markdown) en NOIR ===== */
-      .stApp [data-testid="stSidebar"] .stMarkdown,
-      .stApp [data-testid="stSidebar"] .markdown-text-container,
-      .stApp [data-testid="stSidebar"] h1,
-      .stApp [data-testid="stSidebar"] h2,
-      .stApp [data-testid="stSidebar"] h3,
-      .stApp [data-testid="stSidebar"] h4,
-      .stApp [data-testid="stSidebar"] h5,
-      .stApp [data-testid="stSidebar"] h6,
-      .stApp [data-testid="stSidebar"] label {{
-        color:#111 !important;   /* <- “📂 Données” devient noir */
-      }}
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -2642,6 +2632,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
