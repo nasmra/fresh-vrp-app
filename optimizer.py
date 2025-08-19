@@ -496,18 +496,6 @@ def run_optimization(
     routing.AddDimensionWithVehicleCapacity(w_cb_idx, 0, data["vehicle_weights"], True, "Weight")
     routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
 
-    # ---------- Pré-clustering (optionnel) ----------
-    # ---------- Pré-clustering (optionnel) ----------
-    if use_preclustering and data["num_vehicles"] > 1 and len(nodes) > 2:
-        k = min(data["num_vehicles"], len(nodes) - 1)
-        preassign = _kcenter_on_matrix(nodes, data["km_matrix"], k)
-        # Autoriser seed_vid et ses (cluster_neighbors-1) voisins
-        neigh = max(1, int(cluster_neighbors))
-        for n_idx, code in enumerate(nodes[1:], start=1):
-            ix = mgr.NodeToIndex(n_idx)  # <-- FIX ICI
-            seed_vid = preassign.get(code, 0) % data["num_vehicles"]
-            allowed = sorted({(seed_vid + t) % data["num_vehicles"] for t in range(neigh)})
-            routing.SetAllowedVehiclesForIndex(allowed, ix)
 
 
     # Recherche
@@ -608,6 +596,7 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
 
 
