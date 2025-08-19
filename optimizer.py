@@ -209,8 +209,7 @@ def _best_insertion(seq, node, nodes, km_matrix):
 def _redistribute_net_gain(routes, demands_map, cartons_map, nodes, km_matrix, cap_w, cap_c, force_one_tour=False):
     """
     Remplit les tournées vides uniquement si le déplacement diminue la distance totale.
-    Si force_one_tour=True, et qu'aucun mouvement n'améliore, prend le mouvement
-    de plus faible pénalité pour donner au moins un client.
+    Si force_one_tour=True et aucun mouvement n'améliore, prend le mouvement de plus faible pénalité.
     """
     empties  = [r for r in routes if len(r["seq"]) == 0]
     nonempty = [r for r in routes if len(r["seq"]) > 0]
@@ -220,11 +219,11 @@ def _redistribute_net_gain(routes, demands_map, cartons_map, nodes, km_matrix, c
     nonempty.sort(key=lambda x: x["dist"], reverse=True)
 
     for empty in empties:
-        best_move = None  # (delta_total, donor_idx, client, new_seq_empty)
+        best_move = None  # (delta_total, donor, client, new_seq_empty, donor_seq_new, w, c, donor_new_dist, empty_new_dist)
         for donor in nonempty:
             if not donor["seq"]:
                 continue
-            # candidates : proches de empty
+            # candidats proches du dépôt (proxy simple)
             candidates = sorted(
                 donor["seq"],
                 key=lambda cli: km_matrix[nodes.index("FRESH DISTRIB")][nodes.index(cli)]
@@ -236,9 +235,7 @@ def _redistribute_net_gain(routes, demands_map, cartons_map, nodes, km_matrix, c
                 rem_c = cap_c(empty["vid"]) - float(empty["c"])
                 if w > rem_w or c > rem_c:
                     continue
-                # coût avant
                 before = donor["dist"] + empty["dist"]
-                # coût après (donor sans cli, empty avec insertion optimale)
                 donor_seq_new = donor["seq"][:]; donor_seq_new.remove(cli)
                 donor_new_dist = _compute_route_distance_km(donor_seq_new, nodes, km_matrix)
                 empty_new_seq  = _best_insertion(empty["seq"], cli, nodes, km_matrix)
@@ -246,7 +243,6 @@ def _redistribute_net_gain(routes, demands_map, cartons_map, nodes, km_matrix, c
                 delta = (donor_new_dist + empty_new_dist) - before
                 if (best_move is None) or (delta < best_move[0]):
                     best_move = (delta, donor, cli, empty_new_seq, donor_seq_new, w, c, donor_new_dist, empty_new_dist)
-                    # break early if we already improved strongly
                     if delta < -1e-6:
                         break
             if best_move and best_move[0] < -1e-6:
@@ -274,11 +270,11 @@ def run_optimization(
     unavailable_vehicles=None,
     unavailable_chauffeurs=None,
 
-    # vitesse/qualité
-    time_limit_s: int = 180,
-    balance_span: bool = False,   # False = pas de dimension Distance → plus rapide
-    span_coeff: int = 10,
-    force_one_tour: bool = False  # True = au moins 1 client / chauffeur (peut augmenter la distance)
+    # contraintes & qualité
+    require_one_tour: bool = True,  # impose ≥1 client par chauffeur
+    balance_span: bool = True,      # équilibre les distances (span du max)
+    span_coeff: int = 40,           # 20..80 conseillé
+    time_limit_s: int = 180         # qualité correcte et stable
 ):
     # ---------- Lecture sources ----------
     dist_mat_raw = pd.read_excel(distance_file, index_col=0)
@@ -311,7 +307,7 @@ def run_optimization(
 
     pairs = perms.to_dict(orient="records")
 
-    # temporaires si indisponibles
+    # temporaires de remplacement (même véhicule) uniquement s'il y a des indisponibles
     if unv_ch_norm:
         need = Counter(
             ch_df_full[ch_df_full["norm_name"].isin(unv_ch_norm) & (~ch_df_full["veh_norm"].isin(unv_vh_set))]["veh_norm"]
@@ -349,16 +345,6 @@ def run_optimization(
     # **Ordre fixe par véhicule** (stabilité quand on remplace le chauffeur)
     pairs = sorted(pairs, key=lambda p: _norm_space(p["Véhicule affecté"]))
 
-    # helpers capacités
-    def cap_w_kg(vid):
-        try:    return float(veh_dict[pairs[vid]["Véhicule affecté"]]["Capacité ajustée (kg)"])
-        except: return 1e12
-    def cap_c_cartons(vid):
-        if cartons_col is None:
-            return 1e12
-        try:    return float(veh_dict[pairs[vid]["Véhicule affecté"]][cartons_col])
-        except: return 1e12
-
     # ---------- Demandes ----------
     orders["Code postal"]      = orders["Code postal"].astype(str).str.split(".").str[0]
     orders["Adresse complète"] = orders["Adresse"] + ", " + orders["Code postal"] + ", " + orders["Ville"]
@@ -385,6 +371,13 @@ def run_optimization(
     if len(nodes) <= 1:
         return "Aucune commande exploitable.", None
 
+    # Si on exige ≥1 client par chauffeur, on ne peut pas avoir plus de véhicules que de clients
+    if require_one_tour and len(cust) < len(pairs):
+        note_short = f"ℹ️ {len(pairs)} chauffeurs mais {len(cust)} clients : véhicules actifs réduits à {len(cust)}."
+        pairs = pairs[:len(cust)]
+    else:
+        note_short = ""
+
     submat = dist_mat_raw.loc[nodes, nodes]
 
     km_matrix = submat.applymap(_parse_km_cell).values
@@ -409,78 +402,102 @@ def run_optimization(
     C_SCALE = 10  # 0.1 carton
     w_dem = [0] + [int(round(float(poids_by_code.get(c, 0.0)) * W_SCALE))   for c in nodes[1:]]
     c_dem = [0] + [int(round(float(cartons_by_code.get(c, 0.0)) * C_SCALE)) for c in nodes[1:]]
-    vehicle_weights = [int(round(cap_w_kg(v) * W_SCALE)) for v in range(len(pairs))]
-    vehicle_cartons = [int(round(cap_c_cartons(v) * C_SCALE)) for v in range(len(pairs))]
 
-    # ---------- OR-Tools ----------
-    data = {
-        "cost_int": cost_int,
-        "km_matrix": km_matrix,
-        "w_dem": w_dem,
-        "c_dem": c_dem,
-        "vehicle_weights": vehicle_weights,
-        "vehicle_cartons": vehicle_cartons,
-        "num_vehicles": len(pairs),
-        "depot": 0
-    }
+    def cap_w_scaled(vid):
+        try:    return int(round(float(veh_dict[pairs[vid]["Véhicule affecté"]]["Capacité ajustée (kg)"]) * W_SCALE))
+        except: return int(1e12)
+    def cap_c_scaled(vid):
+        if cartons_col is None: return int(1e12)
+        try:    return int(round(float(veh_dict[pairs[vid]["Véhicule affecté"]][cartons_col]) * C_SCALE))
+        except: return int(1e12)
 
-    mgr = pywrapcp.RoutingIndexManager(
-        len(cost_int),
-        data["num_vehicles"],
-        [data["depot"]]*data["num_vehicles"],
-        [data["depot"]]*data["num_vehicles"],
-    )
-    routing = pywrapcp.RoutingModel(mgr)
+    vehicle_weights = [cap_w_scaled(v) for v in range(len(pairs))]
+    vehicle_cartons = [cap_c_scaled(v) for v in range(len(pairs))]
 
-    def dist_cb(i, j):
-        return int(data["cost_int"][mgr.IndexToNode(i)][mgr.IndexToNode(j)])
-    cb_idx = routing.RegisterTransitCallback(dist_cb)
-    routing.SetArcCostEvaluatorOfAllVehicles(cb_idx)
+    # ---------- Builder + Solve (enveloppe pour tenter, avec ou sans contrainte "1 visite") ----------
+    def _build_and_solve(enforce_one_tour: bool):
+        data = {
+            "cost_int": cost_int,
+            "km_matrix": km_matrix,
+            "w_dem": w_dem,
+            "c_dem": c_dem,
+            "vehicle_weights": vehicle_weights,
+            "vehicle_cartons": vehicle_cartons,
+            "num_vehicles": len(pairs),
+            "depot": 0
+        }
 
-    # Dimension Distance uniquement si équilibrage demandé
-    if balance_span and int(span_coeff) > 0:
-        ub = int(max(1, data["cost_int"].max()) * max(3, len(nodes)))
-        routing.AddDimension(cb_idx, 0, ub, True, "Distance")
-        dist_dim = routing.GetDimensionOrDie("Distance")
-        dist_dim.SetGlobalSpanCostCoefficient(int(span_coeff))
+        mgr = pywrapcp.RoutingIndexManager(
+            len(cost_int),
+            data["num_vehicles"],
+            [data["depot"]]*data["num_vehicles"],
+            [data["depot"]]*data["num_vehicles"],
+        )
+        routing = pywrapcp.RoutingModel(mgr)
 
-    # Capacités
-    w_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: data["w_dem"][mgr.IndexToNode(i)])
-    c_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: data["c_dem"][mgr.IndexToNode(i)])
-    routing.AddDimensionWithVehicleCapacity(w_cb_idx, 0, data["vehicle_weights"], True, "Weight")
-    routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
+        def dist_cb(i, j):
+            return int(data["cost_int"][mgr.IndexToNode(i)][mgr.IndexToNode(j)])
+        cb_idx = routing.RegisterTransitCallback(dist_cb)
+        routing.SetArcCostEvaluatorOfAllVehicles(cb_idx)
 
-    # Recherche — multithread + opérateurs
-    params = pywrapcp.DefaultRoutingSearchParameters()
-    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
-    params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    params.time_limit.seconds = int(time_limit_s)
-    params.log_search = False
-    params.random_seed = 42
-    # workers (parallel)
-    try:
-        params.num_search_workers = max(1, os.cpu_count() or 1)
-    except Exception:
-        pass
-    # voisins pour la solution initiale
-    try:
-        params.first_solution_neighbors_ratio = 0.2
-    except Exception:
-        pass
-    # activer des opérateurs locaux utiles
-    try:
-        ops = params.local_search_operators
-        ops.use_relocate = routing_enums_pb2.BOOL_TRUE
-        ops.use_exchange = routing_enums_pb2.BOOL_TRUE
-        ops.use_or_opt = routing_enums_pb2.BOOL_TRUE
-        ops.use_2opt = routing_enums_pb2.BOOL_TRUE
-        # si dispo (versions récentes) :
-        if hasattr(ops, "use_lin_kernighan"):
-            ops.use_lin_kernighan = routing_enums_pb2.BOOL_TRUE
-    except Exception:
-        pass
+        # Distance balance
+        if balance_span and int(span_coeff) > 0:
+            ub = int(max(1, data["cost_int"].max()) * max(3, len(nodes)))
+            routing.AddDimension(cb_idx, 0, ub, True, "Distance")
+            dist_dim = routing.GetDimensionOrDie("Distance")
+            dist_dim.SetGlobalSpanCostCoefficient(int(span_coeff))
 
-    solution = routing.SolveWithParameters(params)
+        # Weight / Cartons
+        w_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: data["w_dem"][mgr.IndexToNode(i)])
+        c_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: data["c_dem"][mgr.IndexToNode(i)])
+        routing.AddDimensionWithVehicleCapacity(w_cb_idx, 0, data["vehicle_weights"], True, "Weight")
+        routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
+
+        # Visits dimension pour forcer ≥1 client/vehicule
+        if enforce_one_tour:
+            vis_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: 0 if mgr.IndexToNode(i) == 0 else 1)
+            routing.AddDimensionWithVehicleCapacity(vis_cb_idx, 0, [10**9]*data["num_vehicles"], True, "Visits")
+            vis_dim = routing.GetDimensionOrDie("Visits")
+            # impose au moins 1 visite par route
+            for v in range(data["num_vehicles"]):
+                vis_dim.CumulVar(routing.End(v)).SetMin(1)
+
+        # Recherche — multithread + opérateurs
+        params = pywrapcp.DefaultRoutingSearchParameters()
+        params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
+        params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        params.time_limit.seconds = int(time_limit_s)
+        params.log_search = False
+        params.random_seed = 42
+        try:
+            params.num_search_workers = max(1, os.cpu_count() or 1)
+        except Exception:
+            pass
+        try:
+            params.first_solution_neighbors_ratio = 0.2
+        except Exception:
+            pass
+        try:
+            ops = params.local_search_operators
+            ops.use_relocate = routing_enums_pb2.BOOL_TRUE
+            ops.use_exchange = routing_enums_pb2.BOOL_TRUE
+            ops.use_or_opt = routing_enums_pb2.BOOL_TRUE
+            ops.use_2opt = routing_enums_pb2.BOOL_TRUE
+            if hasattr(ops, "use_lin_kernighan"):
+                ops.use_lin_kernighan = routing_enums_pb2.BOOL_TRUE
+        except Exception:
+            pass
+
+        solution = routing.SolveWithParameters(params)
+        return solution, routing, mgr, data
+
+    # 1) tenter avec contrainte dure "1 visite"
+    solution, routing, mgr, data = _build_and_solve(enforce_one_tour=require_one_tour)
+
+    # 2) si échec et qu'on avait imposé "1 visite", relâcher proprement et on remplira via redistribution
+    if not solution and require_one_tour:
+        solution, routing, mgr, data = _build_and_solve(enforce_one_tour=False)
+
     if not solution:
         return "Aucune solution trouvée.", None
 
@@ -498,26 +515,28 @@ def run_optimization(
                 c_sum += data["c_dem"][n]
             idx = solution.Value(routing.NextVar(idx))
         dist_km = _compute_route_distance_km(seq, nodes, data["km_matrix"])
-        # remettre au format kg/cartons
         routes.append({
             "vid": vid,
             "seq": seq,
-            "w": float(w_sum) / W_SCALE,
-            "c": float(c_sum) / C_SCALE,
+            "w": float(w_sum) / 10.0,   # retour en kg
+            "c": float(c_sum) / 10.0,   # retour en cartons
             "dist": dist_km
         })
 
-    # ---------- Redistribution avec gain net (optionnelle) ----------
-    routes = _redistribute_net_gain(
-        routes,
-        demands_map={k: float(v) for k, v in dict(zip(nodes[1:], [wd / W_SCALE for wd in w_dem[1:]])).items()},
-        cartons_map={k: float(v) for k, v in dict(zip(nodes[1:], [cd / C_SCALE for cd in c_dem[1:]])).items()},
-        nodes=nodes,
-        km_matrix=data["km_matrix"],
-        cap_w=lambda vid: cap_w_kg(vid),
-        cap_c=lambda vid: cap_c_cartons(vid),
-        force_one_tour=bool(force_one_tour)
-    )
+    # ---------- Redistribution (si besoin) ----------
+    if require_one_tour:
+        # assure au moins 1 client par chauffeur même si la contrainte a été relâchée
+        if any(len(r["seq"]) == 0 for r in routes):
+            routes = _redistribute_net_gain(
+                routes,
+                demands_map={k: float(v) for k, v in dict(zip(nodes[1:], [float(x)/10.0 for x in data["w_dem"][1:]])).items()},
+                cartons_map={k: float(v) for k, v in dict(zip(nodes[1:], [float(x)/10.0 for x in data["c_dem"][1:]])).items()},
+                nodes=nodes,
+                km_matrix=data["km_matrix"],
+                cap_w=lambda vid: float(veh_dict[pairs[vid]["Véhicule affecté"]]["Capacité ajustée (kg)"]),
+                cap_c=lambda vid: (float(veh_dict[pairs[vid]["Véhicule affecté"]].get(cartons_col, 1e12)) if cartons_col else 1e12),
+                force_one_tour=True
+            )
 
     # ---------- Export Excel ----------
     wb = Workbook()
@@ -526,6 +545,9 @@ def run_optimization(
     summary.append(["Tournée", "Lien vers la feuille"])
 
     result_str = ""
+    if note_short:
+        result_str += note_short + "\n"
+
     delivery_data = []
 
     routes_sorted = sorted(routes, key=lambda r: r["dist"], reverse=True)
@@ -574,10 +596,8 @@ def run_optimization(
     total_c = sum(r["c"]    for r in routes)
 
     empty_left = sum(1 for r in routes if not r["seq"])
-    if empty_left and not force_one_tour:
-        result_str += f"ℹ️ {empty_left} véhicule(s) sans client (conservé pour minimiser la distance).\n"
-    elif empty_left and force_one_tour:
-        result_str += f"⚠️ {empty_left} véhicule(s) sans client faute de mouvement bénéfique.\n"
+    if empty_left:
+        result_str += f"⚠️ {empty_left} véhicule(s) sans client (contraintes et demandes insuffisantes).\n"
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
