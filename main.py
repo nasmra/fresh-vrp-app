@@ -1018,7 +1018,7 @@ with tab_opt:
                                 f"""
                                 <div style="margin-top:6px;padding:8px 10px;border-left:4px solid #0ea5e9;
                                             background:#f0f9ff;color:#111 !important;">
-                                  <span style="font-weight:700;color:#111 !important;">Véhicule utilisé :</span>
+                                  <span style="font-weight:700;color:#111 !important;">Véhicule utiliséxx :</span>
                                   {', '.join(vehs)}
                                 </div>
                                 """,
@@ -1493,6 +1493,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
