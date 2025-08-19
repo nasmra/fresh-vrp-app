@@ -934,7 +934,7 @@ with tab_opt:
                             drive_upload(st.secrets["drive"]["chauffeurs"], buf_ch.getvalue())
                             st.session_state.chauff_buf = BytesIO(buf_ch.getvalue()); st.session_state.chauff_buf.seek(0)
 
-                            st.success(f"✅ « {st.secrets['drive']['chauffeurs']} » mis à jour sur Drive (Kilométrage + cumul).")
+                            st.success(f"✅ Le fichier des Chauffeurs a été mis à jour.")
                 except Exception as e:
                     st.error(f"❌ Échec mise à jour du classeur Chauffeurs sur Drive : {e}")
 
@@ -1497,6 +1497,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
