@@ -142,7 +142,7 @@ def inject_brand_css():
       .stApp .stMarkdown .notice-white-red *,
       .stApp .markdown-text-container .notice-white-red * {{ color:#dc2626 !important; }}
 
-      /* ===== Sidebar – forcer le texte (titres/markdown) en NOIR ===== */
+      /* ===== Sidebar – textes en NOIR ===== */
       .stApp [data-testid="stSidebar"] .stMarkdown,
       .stApp [data-testid="stSidebar"] .markdown-text-container,
       .stApp [data-testid="stSidebar"] h1,
@@ -156,14 +156,40 @@ def inject_brand_css():
       }}
 
       /* ===== Utilitaires ===== */
-      .force-black, .force-black * {{ color:#111 !important; }}  /* -> pour forcer le noir dans un bloc précis */
+      .force-black, .force-black * {{ color:#111 !important; }}
 
-      /* ===== Spinner (st.spinner) en BLANC ===== */
+      /* ===== Spinner lisible en BLANC (+ fallback) ===== */
+      /* 1) forcer la couleur si l'icône suit currentColor */
       .stApp [data-testid="stSpinner"] {{ color:{light_text} !important; }}
-      .stApp [data-testid="stSpinner"] * {{ color:{light_text} !important; }}
       .stApp [data-testid="stSpinner"] svg {{ stroke:{light_text} !important; fill:{light_text} !important; }}
+      .stApp [data-testid="stSpinner"] svg * {{ stroke:{light_text} !important; fill:{light_text} !important; }}
+
+      /* 2) BaseWeb spinner éventuel */
+      .stApp [data-testid="stSpinner"] [data-baseweb="spinner"],
+      .stApp [data-testid="stSpinner"] [data-baseweb="spinner"] * {{
+        color:{light_text} !important; fill:{light_text} !important; stroke:{light_text} !important;
+      }}
+
+      /* 3) Fallback : cacher l’icône d’origine et afficher un spinner CSS blanc */
+      .stApp [data-testid="stSpinner"] {{
+        display:inline-flex !important; align-items:center; gap:8px;
+      }}
+      .stApp [data-testid="stSpinner"] svg,
+      .stApp [data-testid="stSpinner"] .stSpinner,
+      .stApp [data-testid="stSpinner"] [class*="spinner"] {{
+        display:none !important;
+      }}
+      .stApp [data-testid="stSpinner"]::before {{
+        content:""; width:14px; height:14px;
+        border:2px solid rgba(255,255,255,.35);
+        border-top-color:{light_text};
+        border-radius:50%;
+        animation:fd-spin .9s linear infinite;
+      }}
+      @keyframes fd-spin {{ to {{ transform: rotate(360deg); }} }}
     </style>
     """, unsafe_allow_html=True)
+
 
 
 
@@ -1502,6 +1528,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
