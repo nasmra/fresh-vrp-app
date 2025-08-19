@@ -38,7 +38,6 @@ def inject_brand_css():
 
     st.markdown(f"""
     <style>
-      /* ===== Fond + filigrane ===== */
       .stApp {{
         background:
           radial-gradient(rgba(7,28,71,{pattern_opacity}) 1px, transparent 1px) 0 0/10px 10px,
@@ -47,7 +46,7 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels en BLANC ===== */
+      /* Titres/labels en blanc */
       .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
       .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
       .stApp .stTextInput > label, .stApp .stNumberInput > label,
@@ -56,11 +55,10 @@ def inject_brand_css():
       .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
       .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
 
-      /* ===== Sélecteurs ===== */
+      /* Sélecteurs */
       .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
       .stApp [data-baseweb="select"] input::placeholder {{ color:rgba(0,0,0,.55) !important; }}
-      body [data-baseweb="layer"] [role="listbox"],
-      body [data-baseweb="popover"] [role="listbox"] {{
+      body [role="listbox"] {{
         background:#FFF !important; border:1px solid rgba(12,61,145,.35) !important; box-shadow:0 8px 24px rgba(7,28,71,.18);
       }}
       body [role="listbox"] [role="option"], body [role="listbox"] [role="option"] * {{ color:#111 !important; fill:#111 !important; opacity:1 !important; }}
@@ -72,14 +70,14 @@ def inject_brand_css():
         background:#FFE8E8 !important; color:#B21F2D !important; fill:#B21F2D !important;
       }}
 
-      /* ===== Chips indisponibilités ===== */
+      /* Chips indisponibilités */
       [data-baseweb="tag"] {{ background:#E9F4FF !important; border:1px solid rgba(12,61,145,.35) !important; }}
       [data-baseweb="tag"] * {{ color:{dark_text} !important; }}
       [data-baseweb="tag"] svg {{ fill:{brand_blue} !important; }}
       .unavail [data-baseweb="tag"] {{ background:rgba(220,53,69,.12) !important; border:1px solid rgba(220,53,69,.60) !important; }}
       .unavail [data-baseweb="tag"] *, .unavail [data-baseweb="tag"] svg {{ color:#7a0c0c !important; fill:#7a0c0c !important; }}
 
-      /* ===== Boutons / Onglets ===== */
+      /* Boutons / Onglets */
       div[data-baseweb="tab-list"], div[role="tablist"] {{ gap:12px !important; border-bottom:none !important; padding-bottom:8px; }}
       div[data-baseweb="tab-list"] button, div[role="tablist"] > button[role="tab"] {{
         background:#FFF !important; border:1px solid rgba(12,61,145,.18) !important;
@@ -104,7 +102,7 @@ def inject_brand_css():
       .stApp form button:hover,
       .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
 
-      /* ===== HÉRO & TITRE ===== */
+      /* HÉRO & titre */
       .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
       .welcome-card {{
         background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
@@ -115,7 +113,7 @@ def inject_brand_css():
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
       .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
 
-      /* ===== Cartes d’alerte ===== */
+      /* Cartes d’alerte (fond blanc) */
       .stApp .stAlert {{
         background:#fff !important;
         border:1px solid rgba(12,61,145,.25) !important;
@@ -125,7 +123,7 @@ def inject_brand_css():
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
 
-      /* ===== Sidebar en NOIR ===== */
+      /* Sidebar en noir */
       .stApp [data-testid="stSidebar"] .stMarkdown,
       .stApp [data-testid="stSidebar"] .markdown-text-container,
       .stApp [data-testid="stSidebar"] h1,
@@ -136,27 +134,38 @@ def inject_brand_css():
       .stApp [data-testid="stSidebar"] h6,
       .stApp [data-testid="stSidebar"] label {{ color:#111 !important; }}
 
-      /* ===== Utilitaires ===== */
-      .force-black, .force-black * {{ color:#111 !important; }}   /* forcer le noir localement */
-      .fd-status {{ color:#fff !important; font-weight:600; margin:4px 0 6px; }}  /* statut blanc au-dessus du progress */
-
-      /* ===== Sabliers personnalisés + masquage du spinner Streamlit ===== */
-      .stApp [data-testid="stSpinner"] {{ display:none !important; }}
-
-      .fd-wip {{
-        display:inline-flex; align-items:center; gap:.6rem;
-        color:{light_text} !important; font-weight:600;
+      /* === Notice blanche + texte rouge (⚠️ nécessaire pour ton message) === */
+      .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
+      .stApp .stMarkdown .notice-white-red,
+      .stApp .markdown-text-container .notice-white-red {{
+        background:#fff !important;
+        border:2px solid #dc2626 !important;
+        border-radius:10px;
+        padding:.75rem 1rem;
+        box-shadow:0 6px 18px rgba(7,28,71,.10);
+        color:#dc2626 !important;
+        display:block;
+        margin:10px 0 24px !important;
       }}
+      .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
+      .stApp .stMarkdown .notice-white-red *,
+      .stApp .markdown-text-container .notice-white-red * {{
+        color:#dc2626 !important;
+      }}
+
+      /* Utilitaires */
+      .force-black, .force-black * {{ color:#111 !important; }}
+      .fd-status {{ color:#fff !important; font-weight:600; margin:4px 0 6px; }}
+
+      /* Sabliers custom + masquer le spinner Streamlit */
+      .stApp [data-testid="stSpinner"] {{ display:none !important; }}
+      .fd-wip {{ display:inline-flex; align-items:center; gap:.6rem; color:{light_text} !important; font-weight:600; }}
       .fd-wip .fd-ico {{
         width:24px; height:24px; color:{brand_orange};
         fill:currentColor; stroke:currentColor; 
         animation: fd-flip 1.1s linear infinite;
       }}
-      @keyframes fd-flip {{
-        0%   {{ transform: rotate(0deg);   }}
-        50%  {{ transform: rotate(180deg); }}
-        100% {{ transform: rotate(360deg); }}
-      }}
+      @keyframes fd-flip {{ 0% {{transform:rotate(0deg)}} 50% {{transform:rotate(180deg)}} 100% {{transform:rotate(360deg)}} }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -1505,6 +1514,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
