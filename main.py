@@ -47,14 +47,27 @@ def inject_brand_css():
       }}
       {f'.stApp::before {{ content:""; position:fixed; inset:0; background:url("data:image/png;base64,{logo_b64}") no-repeat 24px 24px; background-size:160px; opacity:.12; pointer-events:none; z-index:0; }}' if logo_b64 else ''}
 
-      /* ===== Titres & labels en BLANC (fond sombre) ===== */
-      .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{ color:{light_text} !important; }}
-      .stApp .stSelectbox > label, .stApp .stMultiSelect > label,
-      .stApp .stTextInput > label, .stApp .stNumberInput > label,
-      .stApp .stDateInput > label, .stApp .stTextArea > label,
-      .stApp .stSlider > label, .stApp .stRadio > label,
-      .stApp .stCheckbox > label, .stApp label {{ color:{light_text} !important; }}
-      .stApp .stMarkdown, .stApp .markdown-text-container {{ color:{light_text} !important; }}
+      /* ===== TEXTE BLANC UNIQUEMENT DANS LA ZONE PRINCIPALE ===== */
+      .stApp [data-testid="stAppViewContainer"] h1,
+      .stApp [data-testid="stAppViewContainer"] h2,
+      .stApp [data-testid="stAppViewContainer"] h3,
+      .stApp [data-testid="stAppViewContainer"] h4,
+      .stApp [data-testid="stAppViewContainer"] h5,
+      .stApp [data-testid="stAppViewContainer"] h6,
+      .stApp [data-testid="stAppViewContainer"] .stMarkdown,
+      .stApp [data-testid="stAppViewContainer"] .markdown-text-container,
+      .stApp [data-testid="stAppViewContainer"] label {{ color:{light_text} !important; }}
+
+      /* ===== SIDEBAR : forcer titres/markdown en NOIR ===== */
+      .stApp [data-testid="stSidebar"] h1,
+      .stApp [data-testid="stSidebar"] h2,
+      .stApp [data-testid="stSidebar"] h3,
+      .stApp [data-testid="stSidebar"] h4,
+      .stApp [data-testid="stSidebar"] h5,
+      .stApp [data-testid="stSidebar"] h6,
+      .stApp [data-testid="stSidebar"] .stMarkdown,
+      .stApp [data-testid="stSidebar"] .markdown-text-container,
+      .stApp [data-testid="stSidebar"] label {{ color:#111 !important; }}
 
       /* ===== Sélecteurs ===== */
       .stApp div[data-baseweb="select"], .stApp div[data-baseweb="select"] * {{ color:#111 !important; fill:#111 !important; }}
@@ -103,60 +116,8 @@ def inject_brand_css():
       .stApp [data-testid="stForm"] button:hover,
       .stApp form button:hover,
       .stApp button[kind][data-testid^="baseButton"]:hover {{ background:#FFA23A !important; }}
-
-      /* ===== HÉRO & TITRE ===== */
-      .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
-      .welcome-card {{
-        background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
-        box-shadow:0 10px 24px rgba(0,0,0,.18);
-        max-width:880px; width:min(92vw,880px); text-align:center;
-      }}
-      .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
-      .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
-      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
-
-      /* ===== Cartes d’alerte (surfaces blanches) ===== */
-      .stApp .stAlert {{
-        background:#fff !important;
-        border:1px solid rgba(12,61,145,.25) !important;
-        border-radius:10px !important;
-        box-shadow:0 6px 18px rgba(7,28,71,.08);
-        color:{dark_text} !important;
-      }}
-      .stApp .stAlert * {{ color:{dark_text} !important; }}
-
-      /* ===== Notice blanche + texte rouge ===== */
-      .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
-      .stApp .stMarkdown .notice-white-red,
-      .stApp .markdown-text-container .notice-white-red {{
-        background:#fff !important;
-        border:2px solid #dc2626 !important;
-        border-radius:10px;
-        padding:.75rem 1rem;
-        box-shadow:0 6px 18px rgba(7,28,71,.10);
-        color:#dc2626 !important;
-        display:block;
-        margin:10px 0 24px !important;
-      }}
-      .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
-      .stApp .stMarkdown .notice-white-red *,
-      .stApp .markdown-text-container .notice-white-red * {{ color:#dc2626 !important; }}
-
-      /* ===== Sidebar – forcer le texte (titres/markdown) en NOIR ===== */
-      .stApp [data-testid="stSidebar"] .stMarkdown,
-      .stApp [data-testid="stSidebar"] .markdown-text-container,
-      .stApp [data-testid="stSidebar"] h1,
-      .stApp [data-testid="stSidebar"] h2,
-      .stApp [data-testid="stSidebar"] h3,
-      .stApp [data-testid="stSidebar"] h4,
-      .stApp [data-testid="stSidebar"] h5,
-      .stApp [data-testid="stSidebar"] h6,
-      .stApp [data-testid="stSidebar"] label {{
-        color:#111 !important;   /* <- “📂 Données” devient noir */
-      }}
     </style>
     """, unsafe_allow_html=True)
-
 
 
 def alert_white_red(msg: str):
@@ -1382,6 +1343,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
