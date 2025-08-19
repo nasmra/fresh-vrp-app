@@ -155,8 +155,8 @@ def inject_brand_css():
         color:#111 !important;   /* <- “📂 Données” devient noir */
       }}
 
-    /* ===== Utilitaires ===== */
-    .force-black, .force-black * { color:#111 !important; }
+        /* ===== Utilitaires ===== */
+        .force-black, .force-black * { color:#111 !important; }
 
       
     </style>
@@ -1498,6 +1498,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
