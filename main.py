@@ -275,6 +275,61 @@ def _deferred_reset(flag_key: str, keys: list[str]):
             st.session_state.pop(k, None)
         st.session_state[flag_key] = False
 
+# ======== Commandes : normalisation & import local ========
+REQUIRED_ORDER_COLS = [
+    "Code client", "Libellé", "Quantité", "Unité", "Adresse", "Code postal", "Ville"
+]
+
+def _canon_col(name: str) -> str:
+    s = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+# Synonymes tolérés -> nom cible
+_COL_SYNONYMS = {
+    "Code client": {"code client","client","code","code tiers","code (tiers)","code_client","client code"},
+    "Libellé": {"libelle","designation","produit","article","label","intitule"},
+    "Quantité": {"quantite","qte","qty","quantite totale","quantite commandee","quantity"},
+    "Unité": {"unite","unit","uom"},
+    "Adresse": {"adresse","adresse 1","adresse complete","adresse complète","adress"},
+    "Code postal": {"code postal","cp","postal code","zipcode","zip"},
+    "Ville": {"ville","commune","city","localite","localité"},
+}
+
+def _standardize_orders_df(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    rename = {}
+    for c in list(df.columns):
+        cc = _canon_col(c)
+        for target, syns in _COL_SYNONYMS.items():
+            if cc in syns:
+                rename[c] = target
+                break
+    df = df.rename(columns=rename)
+    missing = [col for col in REQUIRED_ORDER_COLS if col not in df.columns]
+    return df, missing
+
+def _uploaded_orders_to_excelbuf(uploaded) -> tuple[BytesIO, pd.DataFrame, list[str]]:
+    """Lit xlsx/csv, normalise colonnes, renvoie un buffer Excel prêt pour optimizer."""
+    # Lire
+    name = (uploaded.name or "").lower()
+    if name.endswith((".xlsx", ".xls")):
+        df = pd.read_excel(uploaded)
+    elif name.endswith(".csv"):
+        # détection auto du séparateur
+        df = pd.read_csv(uploaded, sep=None, engine="python")
+    else:
+        raise ValueError("Format non supporté (utilise .xlsx / .xls / .csv).")
+
+    # Normaliser colonnes
+    df, missing = _standardize_orders_df(df)
+    if missing:
+        return None, df, missing
+
+    # Sauver en Excel (in-memory) pour rester compatible avec run_optimization
+    out = BytesIO()
+    with pd.ExcelWriter(out, engine="openpyxl") as w:
+        df.to_excel(w, index=False)
+    out.seek(0)
+    return out, df, []
 
 # -------- Helpers nom chauffeur / parsing / métriques ----------
 def _clean_chauffeur_name(name: str) -> str:
@@ -633,6 +688,50 @@ tab_opt, tab_add, tab_drivers = st.tabs([
 # =========================================================
 with tab_opt:
     st.subheader("Paramètres d'optimisation")
+    # --------- Source commandes : import local prioritaire ----------
+    with st.expander("📥 Importer le fichier de commandes du jour (xlsx/csv)", expanded=True):
+        up = st.file_uploader(
+            "Glissez-déposez ou cliquez pour sélectionner votre fichier (.xlsx, .xls, .csv)",
+            type=["xlsx", "xls", "csv"],
+            key="orders_upload",
+            help="Colonnes attendues : Code client, Libellé, Quantité, Unité, Adresse, Code postal, Ville",
+        )
+        cols_u1, cols_u2 = st.columns([2,1])
+        with cols_u1:
+            src = "📎 Import local" if st.session_state.get("orders_source") == "upload" else f"Drive : {st.session_state.get('orders_name') or st.secrets['drive'].get('commandes','(non défini)')}"
+            st.caption(f"**Source actuelle des commandes** : {src}")
+        with cols_u2:
+            if st.button("↩️ Revenir aux commandes Drive"):
+                try:
+                    b = drive_download(st.secrets["drive"]["commandes"])
+                    st.session_state["orders_buf"] = _to_buf(b)
+                    st.session_state["orders_name"] = st.secrets["drive"]["commandes"]
+                    st.session_state["orders_source"] = "drive"
+                    st.success("Revenu au fichier Drive.")
+                except Exception as e:
+                    st.error(f"Impossible de recharger depuis Drive : {e}")
+    
+        if up is not None:
+            try:
+                buf, df_preview, missing = _uploaded_orders_to_excelbuf(up)
+                if missing:
+                    st.error("Colonnes manquantes : " + ", ".join(missing))
+                    st.markdown("Aperçu pour diagnostic :")
+                    st.dataframe(df_preview.head(10), use_container_width=True)
+                else:
+                    st.session_state["orders_buf"] = buf
+                    st.session_state["orders_name"] = up.name
+                    st.session_state["orders_source"] = "upload"
+                    st.success(f"✅ « {up.name} » importé. Il sera utilisé pour l'optimisation (prioritaire sur Drive).")
+                    # aperçu (sans casser le buffer)
+                    buf.seek(0)
+                    try:
+                        df_head = pd.read_excel(buf).head(10)
+                        st.dataframe(df_head, use_container_width=True)
+                    finally:
+                        buf.seek(0)
+            except Exception as e:
+                st.error(f"Échec import : {e}")
 
     # Indisponibilités
     unv_veh, unv_ch = [], []
@@ -1381,6 +1480,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
