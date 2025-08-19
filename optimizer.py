@@ -503,7 +503,8 @@ def run_optimization(
         # Autoriser seed_vid et seed_vid+1 .. +neighbors-1 (wrap modulo nb véhicules)
         neigh = max(1, int(cluster_neighbors))
         for n_idx, code in enumerate(nodes[1:], start=1):
-            ix = routing.NodeToIndex(n_idx)
+            ix = mgr.NodeToIndex(n_idx)
+
             seed_vid = preassign.get(code, 0) % data["num_vehicles"]
             allowed = sorted({(seed_vid + t) % data["num_vehicles"] for t in range(neigh)})
             routing.SetAllowedVehiclesForIndex(allowed, ix)
@@ -606,3 +607,4 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
