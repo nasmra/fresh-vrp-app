@@ -115,7 +115,7 @@ def inject_brand_css():
       }}
       .welcome-card h2 {{ margin:0 0 6px 0; font-weight:800; font-size:clamp(22px, 3.2vw, 34px); }}
       .welcome-card p  {{ margin:0; opacity:.95; font-size:clamp(12px, 1.4vw, 16px); }}
-      .page-title {{ text-align:center; margin: 15px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
+      .page-title {{ text-align:center; margin: 8px 0 14px; font-size: clamp(26px, 4vw, 44px); }}
 
       /* ===== Cartes d’alerte Streamlit (surfaces blanches) ===== */
       .stApp .stAlert {{
@@ -127,22 +127,23 @@ def inject_brand_css():
       }}
       .stApp .stAlert * {{ color:{dark_text} !important; }}
 
-      /* ===== Helper notice-white-red : FOND BLANC + TEXTE ROUGE ===== */
-      /* (Spécificité forte pour battre l'héritage en blanc) */
+      /* ===== Helper notice-white-red : FOND BLANC + TEXTE ROUGE + ESPACE SOUS LE CADRE ===== */
       .stApp [data-testid="stMarkdownContainer"] .notice-white-red,
       .stApp .stMarkdown .notice-white-red,
       .stApp .markdown-text-container .notice-white-red {{
         background:#fff !important;
-        border:2px solid #dc2626 !important;   /* rouge vif */
+        border:2px solid #dc2626 !important;
         border-radius:10px;
         padding:.75rem 1rem;
         box-shadow:0 6px 18px rgba(7,28,71,.10);
-        color:#dc2626 !important;               /* <-- TEXTE ROUGE */
+        color:#dc2626 !important;
+        margin:8px 0 16px !important;   /* <-- espace sous l’alerte */
+        display:block;
       }}
       .stApp [data-testid="stMarkdownContainer"] .notice-white-red *,
       .stApp .stMarkdown .notice-white-red *,
       .stApp .markdown-text-container .notice-white-red * {{
-        color:#dc2626 !important;               /* enfants aussi en ROUGE */
+        color:#dc2626 !important;       /* enfants aussi en rouge */
       }}
     </style>
     """, unsafe_allow_html=True)
@@ -1371,6 +1372,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
