@@ -19,13 +19,13 @@ except Exception:
 # ======================================================
 # Utils
 # ======================================================
-def _norm(s): 
+def _norm(s):
     return re.sub(r"\s+", " ", str(s or "")).strip().lower()
 
 def _norm_space(s):
     return re.sub(r"\s+", " ", str(s or "")).strip()
 
-def sanitize_sheet_name(name): 
+def sanitize_sheet_name(name):
     return re.sub(r'[\\/*?:\[\]]', '', name)[:31]
 
 
@@ -77,7 +77,7 @@ def adjust_vehicle_capacities(vehicles):
 
     vehicles = vehicles.copy()
     base = pd.to_numeric(vehicles.get("Poids (kg)"), errors="coerce").fillna(0)
-    # IMPORTANT: fournir une Series par défaut (pas un int), sinon .apply plante
+    # IMPORTANT : Series défaut pour éviter .apply sur int
     extra_series = vehicles.get(
         "Informations supplémentaires",
         pd.Series(0, index=vehicles.index)
@@ -260,13 +260,14 @@ def run_optimization(
     unavailable_vehicles=None,
     unavailable_chauffeurs=None,
 
-    balance_span: bool = True,   # équilibrage des distances
-    span_coeff: int = 0,        # 0..200 (baisser pour routes plus compactes)
-    time_limit_s: int = 300      # temps de recherche
+    # réglages vitesse/qualité
+    speed_profile: str = "fast",  # "fast" | "balanced" | "best"
+    time_limit_s: int = 60,       # conseillé: fast=60, balanced=120, best=300
+    balance_span: bool = False,   # False = plus rapide (pas de dimension Distance)
+    span_coeff: int = 10          # si balance_span=True (0..50)
 ):
     # ---------- Lecture sources ----------
     dist_mat_raw = pd.read_excel(distance_file, index_col=0)
-    # normalise index/colonnes pour matcher les codes clients
     dist_mat_raw.index = dist_mat_raw.index.map(_norm_space)
     dist_mat_raw.columns = dist_mat_raw.columns.map(_norm_space)
 
@@ -296,7 +297,7 @@ def run_optimization(
 
     pairs = perms.to_dict(orient="records")
 
-    # temporaires de remplacement (même véhicule) uniquement s'il y a des indisponibles
+    # temporaires si indisponibles
     if unv_ch_norm:
         need = Counter(
             ch_df_full[ch_df_full["norm_name"].isin(unv_ch_norm) & (~ch_df_full["veh_norm"].isin(unv_vh_set))]["veh_norm"]
@@ -316,33 +317,32 @@ def run_optimization(
                     pairs.append({"Nom Complet": nm, "Véhicule affecté": v})
                     already.add(nm)
 
-    # véhicules indispo → filtre défensif
+    # filtre véhicules indispo
     pairs = [p for p in pairs if _norm_space(p["Véhicule affecté"]) not in unv_vh_set]
     if not pairs:
         return "Aucun chauffeur disponible après filtrage.", None
 
-    # ---------- Capacités véhicules ----------
+    # capacités véhicules
     vehs = adjust_vehicle_capacities(vehs)
     veh_dict = vehs.set_index("Véhicule").to_dict("index")
-
     cartons_col = next((c for c in vehs.columns if re.search(r"\bcartons?\b", str(c), flags=re.I)), None)
 
     def cap_w(vid):
-        try:    return int(veh_dict[pairs[vid]["Véhicule affecté"]]["Capacité ajustée (kg)"])
+        try:    return int(veh_dict[pairs[vid]]["Capacité ajustée (kg)"])
         except: return 10**9
 
     def cap_c(vid):
         if cartons_col is None:
             return 10**9
-        try:    return int(veh_dict[pairs[vid]["Véhicule affecté"]][cartons_col])
+        try:    return int(veh_dict[pairs[vid]][cartons_col])
         except: return 10**9
 
-    # garder seulement les pairs ayant des capacités connues
+    # ne garder que les paires avec véhicule connu
     pairs = [p for p in pairs if p["Véhicule affecté"] in veh_dict]
     if not pairs:
         return "Aucun véhicule trouvable pour les chauffeurs retenus.", None
 
-    # **Stabilise l'ordre des véhicules** (important pour la reproductibilité)
+    # **Stabilise l'ordre**: par véhicule puis par nom
     pairs = sorted(pairs, key=lambda p: (_norm_space(p["Véhicule affecté"]), _norm(p["Nom Complet"])))
 
     # ---------- Demandes ----------
@@ -353,8 +353,6 @@ def run_optimization(
     orders_f["Quantité"] = pd.to_numeric(orders_f["Quantité"], errors="coerce").fillna(0.0)
     orders_f["Cartons"]  = np.where(orders_f["Unité"] == "U",  orders_f["Quantité"]/30.0, 0.0)
     orders_f["Poids"]    = np.where(orders_f["Unité"] == "KG", orders_f["Quantité"],      0.0)
-
-    # normalise les codes clients pour matcher la matrice
     orders_f["Code client"] = orders_f["Code client"].astype(str).map(_norm_space)
 
     agg = (
@@ -375,11 +373,9 @@ def run_optimization(
 
     submat = dist_mat_raw.loc[nodes, nodes]
 
-    # km réels (pour reporting/redistribution)
     km_matrix = submat.applymap(_parse_km_cell).values
     np.fill_diagonal(km_matrix, 0.0)
 
-    # matrice de coût (distance ou temps) → ENTIER avec SCALE
     if critere == "distance":
         cost_float = km_matrix
     else:
@@ -389,17 +385,16 @@ def run_optimization(
     if float(np.max(cost_float)) <= 0.0:
         return "Matrice de coûts invalide (toutes valeurs nulles). Vérifie le format km/min.", None
 
-    SCALE = 100  # centi-km ou centi-min
+    SCALE = 100
     cost_int = np.rint(cost_float * SCALE).astype(np.int64)
     if cost_int.max() <= 0:
         return "Alerte: coûts nuls après parsing. Vérifie le fichier distances/temps.", None
 
-    # demandes entières (arrondi)
     w_dem = [0] + [int(round(float(poids_by_code.get(c, 0.0))))   for c in nodes[1:]]
     c_dem = [0] + [int(round(float(cartons_by_code.get(c, 0.0)))) for c in nodes[1:]]
 
-    vehicle_weights = [cap_w(v) for v in range(len(pairs))]
-    vehicle_cartons = [cap_c(v) for v in range(len(pairs))]
+    vehicle_weights = [int(veh_dict[p["Véhicule affecté"]]["Capacité ajustée (kg)"]) if p["Véhicule affecté"] in veh_dict else 10**9 for p in pairs]
+    vehicle_cartons = [int(veh_dict[p["Véhicule affecté"]].get(cartons_col, 10**9)) if p["Véhicule affecté"] in veh_dict and cartons_col else 10**9 for p in pairs]
 
     # ---------- OR-Tools ----------
     data = {
@@ -426,23 +421,33 @@ def run_optimization(
     cb_idx = routing.RegisterTransitCallback(dist_cb)
     routing.SetArcCostEvaluatorOfAllVehicles(cb_idx)
 
-    # dimension Distance avec un plafond sûr (>0)
-    ub = int(max(1, data["cost_int"].max()) * max(3, len(nodes)))  # marge large
-    routing.AddDimension(cb_idx, 0, ub, True, "Distance")
-    dist_dim = routing.GetDimensionOrDie("Distance")
-    dist_dim.SetGlobalSpanCostCoefficient(int(span_coeff) if balance_span and span_coeff > 0 else 0)
+    # Dimension Distance uniquement si équilibrage demandé
+    if balance_span and int(span_coeff) > 0:
+        ub = int(max(1, data["cost_int"].max()) * max(3, len(nodes)))
+        routing.AddDimension(cb_idx, 0, ub, True, "Distance")
+        dist_dim = routing.GetDimensionOrDie("Distance")
+        dist_dim.SetGlobalSpanCostCoefficient(int(span_coeff))
 
-    # capacités
+    # Capacités
     w_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: data["w_dem"][mgr.IndexToNode(i)])
     c_cb_idx = routing.RegisterUnaryTransitCallback(lambda i: data["c_dem"][mgr.IndexToNode(i)])
     routing.AddDimensionWithVehicleCapacity(w_cb_idx, 0, data["vehicle_weights"], True, "Weight")
     routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
 
-    # Recherche améliorée
+    # Recherche — profils de vitesse
     params = pywrapcp.DefaultRoutingSearchParameters()
-    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.SAVINGS
-    params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    params.time_limit.seconds = int(time_limit_s)
+    if speed_profile == "fast":
+        params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.SAVINGS
+        params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GREEDY_DESCENT
+        params.time_limit.seconds = int(time_limit_s)
+    elif speed_profile == "balanced":
+        params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.SAVINGS
+        params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        params.time_limit.seconds = int(max(time_limit_s, 120))
+    else:  # best
+        params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.SAVINGS
+        params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        params.time_limit.seconds = int(max(time_limit_s, 300))
     params.log_search = False
 
     solution = routing.SolveWithParameters(params)
@@ -465,7 +470,7 @@ def run_optimization(
         dist_km = _compute_route_distance_km(seq, nodes, data["km_matrix"])
         routes.append({"vid": vid, "seq": seq, "w": float(w_sum), "c": float(c_sum), "dist": dist_km})
 
-    # ---------- Forcer 1 tournée par chauffeur (redistribution optimale simple) ----------
+    # ---------- Forcer 1 tournée par chauffeur (redistribution) ----------
     routes = _redistribute_to_fill_empty_routes(
         routes,
         demands_map={k: float(v) for k, v in dict(zip(nodes[1:], w_dem[1:])).items()},
@@ -536,4 +541,3 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
-
