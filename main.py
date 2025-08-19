@@ -628,6 +628,7 @@ def load_from_drive_into_session():
             st.sidebar.error(f"❌ Impossible de télécharger « {name} » depuis Drive : {e}")
 
     # Commandes = optionnel : on n’échoue pas si absent
+    # Commandes = optionnel : ne rien afficher si absent
     orders_name = drive_cfg.get("commandes")
     st.session_state["orders_buf"]  = None
     st.session_state["orders_name"] = orders_name
@@ -635,8 +636,10 @@ def load_from_drive_into_session():
         try:
             content = drive_download(orders_name)
             st.session_state["orders_buf"] = _to_buf(content)
-        except Exception as e:
-            st.sidebar.info(f"ℹ️ Fichier commandes non chargé : {e}")
+        except Exception:
+            # silencieux : pas de message dans la sidebar
+            st.session_state["orders_buf"] = None
+            pass
 
 
 # 1ère initialisation (une seule fois)
@@ -1484,6 +1487,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
