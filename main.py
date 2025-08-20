@@ -1643,6 +1643,7 @@ with tab_vehicles:
                     st.error(f"Erreur lors de l'enregistrement : {e}")
 
 
+
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_del:
         # Aperçu courant du fichier véhicules
@@ -1668,16 +1669,18 @@ with tab_vehicles:
                     unsafe_allow_html=True
                 )
     
-                # --- Case à cocher en BLANC (sur fond sombre) ---
+                # --- Libellé blanc pour la case à cocher (robuste vis-à-vis de ton CSS global) ---
                 st.markdown("""
                 <style>
-                  .white-check, .white-check * { color:#fff !important; }
-                  .white-check [data-baseweb="checkbox"] * { color:#fff !important; }
+                  .del-white-label{ color:#fff !important; font-weight:600; display:inline-block; margin-top:6px; }
                 </style>
                 """, unsafe_allow_html=True)
-                st.markdown('<div class="white-check">', unsafe_allow_html=True)
-                ok = st.checkbox("Je comprends que cette action est irréversible.", key="veh_del_ack")
-                st.markdown('</div>', unsafe_allow_html=True)
+                cb_col, txt_col = st.columns([1, 10])
+                with cb_col:
+                    ok = st.checkbox("", key="veh_del_ack")  # pas de label (on gère nous-mêmes)
+                with txt_col:
+                    st.markdown('<span class="del-white-label">Je comprends que cette action est irréversible.</span>',
+                                unsafe_allow_html=True)
     
                 # Confirmation texte
                 txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
@@ -1720,7 +1723,7 @@ with tab_vehicles:
     
                         except Exception as e:
                             st.error(f"Erreur pendant la suppression : {e}")
-    
+
 
 # ==============================
 # Fonction pour géocoder via Google
@@ -1886,6 +1889,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
