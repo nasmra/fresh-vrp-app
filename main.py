@@ -1379,10 +1379,11 @@ with tab_drivers:
             except Exception as _e:
                 st.warning(f"Impossible d'afficher la liste des chauffeurs : {_e}")
 
+
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_tab_del:
-        _deferred_reset("_reset_del_form", ["del_choice", "del_ack", "del_text"])
-
+        _deferred_reset("_reset_del_form", ["del_choice", "del_text"])  # plus de del_ack
+    
         _chauff_buf = st.session_state.get("chauff_buf")
         if not _chauff_buf:
             st.info("Fichier Chauffeurs introuvable.")
@@ -1393,7 +1394,7 @@ with tab_drivers:
             except Exception as e:
                 st.error(f"Impossible de lire la feuille 'Liste' : {e}")
                 df_ch = pd.DataFrame(columns=["Nom","Prénom","Véhicule affecté","Statut"])
-
+    
             if df_ch.empty or ("Nom" not in df_ch.columns) or ("Prénom" not in df_ch.columns):
                 st.info("Aucun chauffeur exploitable dans la feuille 'Liste'.")
             else:
@@ -1402,7 +1403,7 @@ with tab_drivers:
                     s = str(x or "")
                     s = re.sub(r"\s+", " ", s).strip().rstrip(":").lower()
                     return s
-
+    
                 # Options uniques Nom+Prénom
                 seen = set(); opts = []
                 for _, r in df_ch.iterrows():
@@ -1412,36 +1413,45 @@ with tab_drivers:
                         label = f"{str(r.get('Nom') or '').strip()} {str(r.get('Prénom') or '').strip()}".strip()
                         if label:
                             opts.append({"label": label, "nom": r.get("Nom"), "pre": r.get("Prénom")})
-
+    
                 choice = st.selectbox(
                     "Sélectionner le chauffeur à supprimer",
                     ["— Aucun —"] + [o["label"] for o in opts],
                     index=0,
                     key="del_choice"
                 )
-
+    
                 if st.session_state.get("del_choice") != "— Aucun —":
                     sel = next((o for o in opts if o["label"] == st.session_state["del_choice"]), None)
                     sel_nom, sel_pre = sel["nom"], sel["pre"]
-
+    
                     mask = df_ch.apply(lambda r: _norm(r.get("Nom")) == _norm(sel_nom)
                                                 and _norm(r.get("Prénom")) == _norm(sel_pre), axis=1)
                     st.markdown("**Entrées correspondantes dans 'Liste' :**")
                     show_cols = [c for c in ["Nom","Prénom","Véhicule affecté","Statut"] if c in df_ch.columns]
                     st.dataframe(df_ch.loc[mask, show_cols], use_container_width=True)
-
+    
+                    # Alerte rouge + consigne
                     st.markdown(
-                        "<span style='color:red; font-weight:600;'>"
+                        "<span style='color:#f43f5e; font-weight:700;'>"
                         "⚠️ Action irréversible : seules les lignes de la feuille 'Liste' seront supprimées. "
                         "Les autres feuilles (dont 'Kilométrage') ne seront pas modifiées."
-                        "</span>", unsafe_allow_html=True
+                        "</span>",
+                        unsafe_allow_html=True
                     )
-                    ok = st.checkbox("Je comprends que cette action est irréversible.", key="del_ack")
+                    st.markdown(
+                        "<div style='color:#ff4d4d; font-weight:700; margin:8px 0 6px;'>"
+                        "Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
+                        "</div>",
+                        unsafe_allow_html=True
+                    )
+    
+                    # Confirmation texte (seule sécurité)
                     txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="del_text")
-
+    
                     if st.button("🗑️ Confirmer suppression"):
-                        if not ok or st.session_state.get("del_text","").strip().upper() != "SUPPRIMER":
-                            st.error("Confirmez en cochant la case et en tapant exactement SUPPRIMER.")
+                        if st.session_state.get("del_text","").strip().upper() != "SUPPRIMER":
+                            st.error("Saisissez exactement SUPPRIMER pour confirmer.")
                         else:
                             try:
                                 _chauff_buf.seek(0)
@@ -1449,37 +1459,38 @@ with tab_drivers:
                                 from openpyxl import load_workbook
                                 wb = load_workbook(BytesIO(original))
                                 ws = _get_ws(wb, "Liste")
-
+    
                                 headers = [c.value for c in ws[1]]
                                 col_nom = headers.index("Nom") + 1
                                 col_pre = headers.index("Prénom") + 1
-
+    
                                 rows_to_delete = []
                                 for r in range(2, ws.max_row + 1):
                                     if (_norm(ws.cell(r, col_nom).value) == _norm(sel_nom) and
                                         _norm(ws.cell(r, col_pre).value) == _norm(sel_pre)):
                                         rows_to_delete.append(r)
-
+    
                                 if not rows_to_delete:
                                     st.warning("Aucune ligne correspondante trouvée dans 'Liste'.")
                                 else:
                                     for r in reversed(rows_to_delete):
                                         ws.delete_rows(r, 1)
-
+    
                                     out = BytesIO(); wb.save(out); out.seek(0)
                                     drive_upload(st.secrets["drive"]["chauffeurs"], out.getvalue())
-
+    
                                     st.session_state["chauff_buf"] = BytesIO(out.getvalue())
                                     st.session_state["chauff_buf"].seek(0)
-
+    
                                     st.success(f"✅ {st.session_state['del_choice']} supprimé de 'Liste' ({len(rows_to_delete)} ligne(s)).")
-
+    
                                     # Reset différé + rerun
                                     st.session_state["_reset_del_form"] = True
                                     st.rerun()
-
+    
                             except Exception as e:
                                 st.error(f"Erreur pendant la suppression : {e}")
+
 
 # =========================================================
 #                ONGLET GESTION DES VÉHICULES
@@ -1879,6 +1890,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
