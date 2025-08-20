@@ -1,5 +1,4 @@
 from collections import defaultdict, Counter
-import os
 import re
 import pandas as pd
 import numpy as np
@@ -20,13 +19,13 @@ except Exception:
 # ======================================================
 # Utils
 # ======================================================
-def _norm(s):
+def _norm(s): 
     return re.sub(r"\s+", " ", str(s or "")).strip().lower()
 
 def _norm_space(s):
     return re.sub(r"\s+", " ", str(s or "")).strip()
 
-def sanitize_sheet_name(name):
+def sanitize_sheet_name(name): 
     return re.sub(r'[\\/*?:\[\]]', '', name)[:31]
 
 
@@ -178,7 +177,7 @@ def update_distance_parcourue(workbook):
 
 
 # ======================================================
-# Post-traitements utilitaires
+# Post-traitements de routes (km réels + redistribution)
 # ======================================================
 def _compute_route_distance_km(seq_nodes, nodes, km_matrix):
     """km Depot -> seq -> Depot, km_matrix alignée à 'nodes'."""
@@ -190,6 +189,63 @@ def _compute_route_distance_km(seq_nodes, nodes, km_matrix):
         d += km_matrix[idx[a]][idx[b]]
     d += km_matrix[idx[seq_nodes[-1]]][idx["FRESH DISTRIB"]]
     return float(d)
+
+
+def _best_insertion(seq, node, nodes, km_matrix):
+    """Insère 'node' dans 'seq' à la meilleure position (min km)."""
+    if not seq:
+        return [node]
+    best_seq = None
+    best_cost = float("inf")
+    for pos in range(len(seq) + 1):
+        cand = seq[:pos] + [node] + seq[pos:]
+        cost = _compute_route_distance_km(cand, nodes, km_matrix)
+        if cost < best_cost:
+            best_cost, best_seq = cost, cand
+    return best_seq
+
+
+def _redistribute_to_fill_empty_routes(routes, demands_map, cartons_map, nodes, km_matrix, cap_w, cap_c):
+    """Garantie: au moins 1 tournée par chauffeur (si possible en capacité)."""
+    empties  = [r for r in routes if len(r["seq"]) == 0]
+    nonempty = [r for r in routes if len(r["seq"]) > 0]
+    if not empties:
+        return routes
+
+    # plus longues d'abord comme donneurs
+    nonempty.sort(key=lambda x: x["dist"], reverse=True)
+
+    for empty in empties:
+        for donor in nonempty:
+            if not donor["seq"]:
+                continue
+            # candidats (PROCHES d'abord)
+            cand_sorted = sorted(
+                donor["seq"],
+                key=lambda cli: _compute_route_distance_km([cli] + empty["seq"], nodes, km_matrix)
+            )
+            moved = False
+            for cli in cand_sorted:
+                w = float(demands_map.get(cli, 0.0))
+                c = float(cartons_map.get(cli, 0.0))
+                # capacité RESTANTE du véhicule cible
+                rem_w = cap_w(empty["vid"]) - float(empty["w"])
+                rem_c = cap_c(empty["vid"]) - float(empty["c"])
+                if w <= rem_w and c <= rem_c:
+                    new_seq = _best_insertion(empty["seq"], cli, nodes, km_matrix)
+                    new_dist = _compute_route_distance_km(new_seq, nodes, km_matrix)
+                    # déplacer
+                    donor["seq"].remove(cli)
+                    empty["seq"] = new_seq
+                    donor["w"]  -= w; donor["c"]  -= c
+                    empty["w"]  += w; empty["c"]  += c
+                    donor["dist"] = _compute_route_distance_km(donor["seq"], nodes, km_matrix)
+                    empty["dist"] = new_dist
+                    moved = True
+                    break
+            if moved:
+                break
+    return routes
 
 
 # ======================================================
@@ -205,9 +261,8 @@ def run_optimization(
     unavailable_chauffeurs=None,
 
     balance_span: bool = True,   # équilibrage des distances
-    span_coeff: int = 5,         # coefficient GlobalSpan (0..200)
-    time_limit_s: int = 300,     # temps de recherche
-    ensure_one_per_vehicle: bool = True  # impose ≥1 client/veh si faisable
+    span_coeff: int = 5,        # 0..200 (baisser pour routes plus compactes)
+    time_limit_s: int = 300      # temps de recherche
 ):
     # ---------- Lecture sources ----------
     dist_mat_raw = pd.read_excel(distance_file, index_col=0)
@@ -320,7 +375,7 @@ def run_optimization(
 
     submat = dist_mat_raw.loc[nodes, nodes]
 
-    # km réels (pour reporting)
+    # km réels (pour reporting/redistribution)
     km_matrix = submat.applymap(_parse_km_cell).values
     np.fill_diagonal(km_matrix, 0.0)
 
@@ -334,11 +389,7 @@ def run_optimization(
     if float(np.max(cost_float)) <= 0.0:
         return "Matrice de coûts invalide (toutes valeurs nulles). Vérifie le format km/min.", None
 
-    # Choix SCALE adaptatif pour garder les entiers raisonnables
-    SCALE = 100
-    max_val = float(np.max(cost_float))
-    if max_val * SCALE > 5e8:
-        SCALE = 10
+    SCALE = 100  # centi-km ou centi-min
     cost_int = np.rint(cost_float * SCALE).astype(np.int64)
     if cost_int.max() <= 0:
         return "Alerte: coûts nuls après parsing. Vérifie le fichier distances/temps.", None
@@ -349,20 +400,6 @@ def run_optimization(
 
     vehicle_weights = [cap_w(v) for v in range(len(pairs))]
     vehicle_cartons = [cap_c(v) for v in range(len(pairs))]
-
-    # --------- Pré-check faisabilité unitaire (robustesse) ---------
-    max_w = max(vehicle_weights) if vehicle_weights else 0
-    max_c = max(vehicle_cartons) if vehicle_cartons else 0
-    infeas_clients = []
-    for idx_node, code in enumerate(nodes[1:], start=1):
-        if (w_dem[idx_node] > max_w) or (c_dem[idx_node] > max_c):
-            infeas_clients.append(code)
-    if infeas_clients:
-        return (
-            "Commande(s) non livrable(s) (excèdent capacités de tous les véhicules) : "
-            + ", ".join(infeas_clients),
-            None
-        )
 
     # ---------- OR-Tools ----------
     data = {
@@ -389,11 +426,8 @@ def run_optimization(
     cb_idx = routing.RegisterTransitCallback(dist_cb)
     routing.SetArcCostEvaluatorOfAllVehicles(cb_idx)
 
-    # dimension Distance avec un plafond sûr
-    # Heuristique: somme des "étoiles" depot->i + i->depot / veh comme cible.
-    star_total = int(sum(cost_int[0, i] + cost_int[i, 0] for i in range(1, len(nodes))))
-    # borne supérieure large mais raisonnable
-    ub = int(max(1, cost_int.max()) * max(3, len(nodes)))
+    # dimension Distance avec un plafond sûr (>0)
+    ub = int(max(1, data["cost_int"].max()) * max(3, len(nodes)))  # marge large
     routing.AddDimension(cb_idx, 0, ub, True, "Distance")
     dist_dim = routing.GetDimensionOrDie("Distance")
     dist_dim.SetGlobalSpanCostCoefficient(int(span_coeff) if balance_span and span_coeff > 0 else 0)
@@ -404,82 +438,14 @@ def run_optimization(
     routing.AddDimensionWithVehicleCapacity(w_cb_idx, 0, data["vehicle_weights"], True, "Weight")
     routing.AddDimensionWithVehicleCapacity(c_cb_idx, 0, data["vehicle_cartons"], True, "Cartons")
 
-    # Équilibrage souple par borne supérieure (soft UB) par véhicule
-    num_clients = len(nodes) - 1
-    if data["num_vehicles"] > 0:
-        avg_target = int(np.ceil(star_total / max(1, data["num_vehicles"])))
-        penalty = int(50 * SCALE)  # ajustable (50–200*SCALE)
-        for v in range(data["num_vehicles"]):
-            dist_dim.SetCumulVarSoftUpperBound(routing.End(v), max(avg_target, 1), penalty)
-
-    # Contrainte ≥1 client par véhicule uniquement si faisable (#clients ≥ #veh)
-    if ensure_one_per_vehicle and num_clients >= data["num_vehicles"] and data["num_vehicles"] > 0:
-        def _visit_unary(i):
-            return 0 if mgr.IndexToNode(i) == data["depot"] else 1
-        visit_cb = routing.RegisterUnaryTransitCallback(_visit_unary)
-        routing.AddDimension(visit_cb, 0, len(nodes), True, "VisitCount")
-        visit_dim = routing.GetDimensionOrDie("VisitCount")
-        for v in range(data["num_vehicles"]):
-            # au moins 1 client par véhicule
-            visit_dim.CumulVar(routing.End(v)).SetRange(1, len(nodes))
-
-    # Paramètres de recherche
+    # Recherche améliorée
     params = pywrapcp.DefaultRoutingSearchParameters()
-    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
+    params.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.SAVINGS
     params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    # GLS: lambda ≈ 5% du coût moyen d'arc
-    positive = cost_int[cost_int > 0]
-    avg_arc = int(positive.mean()) if positive.size else 1
-    params.guided_local_search_lambda_coefficient = max(1, int(0.05 * avg_arc))
     params.time_limit.seconds = int(time_limit_s)
     params.log_search = False
-    params.random_seed = 42
-    try:
-        params.number_of_workers = max(1, (os.cpu_count() or 2) - 1)
-    except Exception:
-        pass
-    # Activer quelques opérateurs utiles (si dispo)
-    for attr, val in {
-        "use_multi_armed_bandit_concatenate_operators": True,
-        "use_relocate": True,
-        "use_light_relocate_pair": True,
-        "use_exchange": True,        # 2-opt
-        "use_cross": True,           # cross-exchange
-        "use_or_opt": True,          # Or-Opt (k-chain)
-        "use_path_lns": True,        # Large Neighborhood Search
-        "use_tsp_lns": True,
-    }.items():
-        try:
-            setattr(params, attr, val)
-        except Exception:
-            pass
 
-    # --- Warm start simple (greedy capacitaire) ---
-    routes_hint = [[] for _ in range(data["num_vehicles"])]
-    capW = data["vehicle_weights"][:]
-    capC = data["vehicle_cartons"][:]
-    # trier les clients par demande décroissante (poids puis cartons)
-    clients_idx = list(range(1, len(nodes)))
-    clients_idx.sort(key=lambda n: (data["w_dem"][n], data["c_dem"][n]), reverse=True)
-
-    for n_idx in clients_idx:
-        w, c = data["w_dem"][n_idx], data["c_dem"][n_idx]
-        # choisir le véhicule avec la plus grande capacité résiduelle compatible
-        choices = [(v, capW[v]-w, capC[v]-c) for v in range(data["num_vehicles"]) if capW[v]>=w and capC[v]>=c]
-        if choices:
-            v = max(choices, key=lambda t: (t[1], t[2]))[0]
-            routes_hint[v].append(n_idx)
-            capW[v] -= w; capC[v] -= c
-
-    solution = None
-    try:
-        assignment = routing.ReadAssignmentFromRoutes(routes_hint, True)
-        solution = routing.SolveFromAssignmentWithParameters(assignment, params)
-    except Exception:
-        solution = None
-
-    if not solution:
-        solution = routing.SolveWithParameters(params)
+    solution = routing.SolveWithParameters(params)
     if not solution:
         return "Aucune solution trouvée.", None
 
@@ -498,6 +464,17 @@ def run_optimization(
             idx = solution.Value(routing.NextVar(idx))
         dist_km = _compute_route_distance_km(seq, nodes, data["km_matrix"])
         routes.append({"vid": vid, "seq": seq, "w": float(w_sum), "c": float(c_sum), "dist": dist_km})
+
+    # ---------- Forcer 1 tournée par chauffeur (redistribution optimale simple) ----------
+    routes = _redistribute_to_fill_empty_routes(
+        routes,
+        demands_map={k: float(v) for k, v in dict(zip(nodes[1:], w_dem[1:])).items()},
+        cartons_map={k: float(v) for k, v in dict(zip(nodes[1:], c_dem[1:])).items()},
+        nodes=nodes,
+        km_matrix=data["km_matrix"],
+        cap_w=lambda vid: vehicle_weights[vid],
+        cap_c=lambda vid: vehicle_cartons[vid],
+    )
 
     # ---------- Export Excel ----------
     wb = Workbook()
@@ -559,3 +536,4 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
