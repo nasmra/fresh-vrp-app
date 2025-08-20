@@ -1645,6 +1645,7 @@ with tab_vehicles:
 
 
 
+
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_del:
         # Aperçu courant du fichier véhicules
@@ -1670,24 +1671,20 @@ with tab_vehicles:
                     unsafe_allow_html=True
                 )
     
-                # === Styles SCOPÉS (ID) : forcer le label en blanc + réduire l'écart ===
-                st.markdown("""
-                <style>
-                  /* Tout texte à l'intérieur du conteneur est blanc */
-                  #veh-del-scope, #veh-del-scope * { color:#fff !important; }
-                  /* Cibler précisément le label du checkbox */
-                  #veh-del-scope div[data-testid="stCheckbox"] label{
-                      display:inline-flex; align-items:center; gap:8px !important; margin:0 !important;
-                  }
-                </style>
-                """, unsafe_allow_html=True)
+                # ==== Case à cocher : écart réduit + libellé BLANC garanti ====
+                # - colonnes très resserrées (gap petit)
+                # - label du checkbox masqué; on affiche notre propre libellé avec style inline + !important
+                cb_col, txt_col = st.columns([0.14, 0.86], gap="small")
+                with cb_col:
+                    ok = st.checkbox("", key="veh_del_ack", label_visibility="collapsed")
+                with txt_col:
+                    st.markdown(
+                        '<span style="color:#FFFFFF !important; font-weight:600; display:inline-block; '
+                        'line-height:1.25; margin:0;">Je comprends que cette action est irréversible.</span>',
+                        unsafe_allow_html=True
+                    )
     
-                # Conteneur scopé
-                st.markdown('<div id="veh-del-scope">', unsafe_allow_html=True)
-                ok = st.checkbox("Je comprends que cette action est irréversible.", key="veh_del_ack")
-                st.markdown('</div>', unsafe_allow_html=True)
-    
-                # Confirmation texte (peut rester blanc, car dans la même zone)
+                # Confirmation texte
                 txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
     
                 # Bouton d'exécution
@@ -1696,7 +1693,7 @@ with tab_vehicles:
                         st.error("Confirme en cochant la case et en tapant exactement SUPPRIMER.")
                     else:
                         try:
-                            # Ouvrir, supprimer, sauvegarder, uploader
+                            # Ouvrir, supprimer les lignes correspondantes, sauvegarder, uploader
                             st.session_state["veh_buf"].seek(0)
                             original = st.session_state["veh_buf"].read()
                             wb = load_workbook(BytesIO(original))
@@ -1728,7 +1725,7 @@ with tab_vehicles:
     
                         except Exception as e:
                             st.error(f"Erreur pendant la suppression : {e}")
-
+    
 
 # ==============================
 # Fonction pour géocoder via Google
@@ -1894,6 +1891,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
