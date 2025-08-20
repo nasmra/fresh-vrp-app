@@ -1431,11 +1431,11 @@ with tab_drivers:
                     show_cols = [c for c in ["Nom","Prénom","Véhicule affecté","Statut"] if c in df_ch.columns]
                     st.dataframe(df_ch.loc[mask, show_cols], use_container_width=True)
     
-                    # Alerte rouge + consigne
-
+                    # Alerte + consigne
                     st.markdown(
                         "<div style='color:#ff4d4d; font-weight:700; margin:8px 0 6px;'>"
-                        "⚠️ Je comprends que cette action est irrversible. Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
+                        "⚠️ Je comprends que cette action est irréversible. "
+                        "Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
                         "</div>",
                         unsafe_allow_html=True
                     )
@@ -1473,14 +1473,26 @@ with tab_drivers:
                                     out = BytesIO(); wb.save(out); out.seek(0)
                                     drive_upload(st.secrets["drive"]["chauffeurs"], out.getvalue())
     
+                                    # Rebind en session
                                     st.session_state["chauff_buf"] = BytesIO(out.getvalue())
                                     st.session_state["chauff_buf"].seek(0)
     
-                                    st.success(f"✅ {st.session_state['del_choice']} supprimé de 'Liste' ({len(rows_to_delete)} ligne(s)).")
+                                    st.success(
+                                        f"✅ {st.session_state['del_choice']} supprimé de 'Liste' "
+                                        f"({len(rows_to_delete)} ligne(s))."
+                                    )
     
-                                    # Reset différé + rerun
-                                    st.session_state["_reset_del_form"] = True
-                                    st.rerun()
+                                    # 👉 Afficher la liste restante (comme pour les véhicules)
+                                    try:
+                                        st.session_state["chauff_buf"].seek(0)
+                                        df_ch_updated = pd.read_excel(st.session_state["chauff_buf"], sheet_name="Liste")
+                                        st.markdown("### 📃 Liste des chauffeurs (mise à jour)")
+                                        st.dataframe(df_ch_updated, use_container_width=True)
+                                    except Exception as _e:
+                                        st.warning(f"Impossible d'afficher la liste mise à jour : {_e}")
+    
+                                    # Optionnel : réinitialiser la sélection dans l'UI (sans rerun)
+                                    st.session_state["del_choice"] = "— Aucun —"
     
                             except Exception as e:
                                 st.error(f"Erreur pendant la suppression : {e}")
@@ -1884,6 +1896,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
