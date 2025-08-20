@@ -1642,65 +1642,85 @@ with tab_vehicles:
                 except Exception as e:
                     st.error(f"Erreur lors de l'enregistrement : {e}")
 
+
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_del:
+        # Aperçu courant du fichier véhicules
         try:
-            dfv = _veh_list_df()
+            dfv = _veh_list_df()  # helper défini plus haut
         except Exception:
             dfv = pd.DataFrame()
-
+    
         if dfv.empty or "Véhicule" not in dfv.columns:
             st.info("Aucun véhicule exploitable.")
         else:
             vehs = ["— Aucun —"] + sorted([v for v in dfv["Véhicule"].astype(str).dropna().unique() if v.strip()])
-            choice = st.selectbox("Sélectionner le véhicule à supprimer", vehs, index=0)
-
+            choice = st.selectbox("Sélectionner le véhicule à supprimer", vehs, index=0, key="veh_del_select")
+    
             if choice != "— Aucun —":
                 st.write("Aperçu de la ligne :")
                 st.dataframe(dfv.loc[dfv["Véhicule"].astype(str) == choice], use_container_width=True)
-
+    
                 st.markdown(
-                    "<span style='color:red;font-weight:600;'>⚠️ Action irréversible : suppression de la/les ligne(s) correspondantes.</span>",
+                    "<span style='color:#f43f5e;font-weight:700;'>"
+                    "⚠️ Action irréversible : suppression de la/les ligne(s) correspondantes."
+                    "</span>",
                     unsafe_allow_html=True
                 )
+    
+                # --- Case à cocher en BLANC (sur fond sombre) ---
+                st.markdown("""
+                <style>
+                  .white-check, .white-check * { color:#fff !important; }
+                  .white-check [data-baseweb="checkbox"] * { color:#fff !important; }
+                </style>
+                """, unsafe_allow_html=True)
+                st.markdown('<div class="white-check">', unsafe_allow_html=True)
                 ok = st.checkbox("Je comprends que cette action est irréversible.", key="veh_del_ack")
+                st.markdown('</div>', unsafe_allow_html=True)
+    
+                # Confirmation texte
                 txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
-
-                if st.button("🗑️ Confirmer suppression"):
-                    if not ok or st.session_state.get("veh_del_text","").strip().upper() != "SUPPRIMER":
+    
+                # Bouton d'exécution
+                if st.button("🗑️ Confirmer suppression", key="veh_del_btn"):
+                    if (not ok) or (st.session_state.get("veh_del_text", "").strip().upper() != "SUPPRIMER"):
                         st.error("Confirme en cochant la case et en tapant exactement SUPPRIMER.")
                     else:
                         try:
+                            # Ouvrir, supprimer les lignes correspondantes, sauvegarder, uploader
                             st.session_state["veh_buf"].seek(0)
                             original = st.session_state["veh_buf"].read()
                             wb = load_workbook(BytesIO(original))
-                            ws = _veh_ws(wb)
+                            ws = _veh_ws(wb)  # helper défini plus haut
                             col_veh, col_w, col_pal, col_car, col_info = _veh_columns(ws)
-
-                            # Trouver les lignes à supprimer
+    
                             rows_to_delete = []
-                            for r in range(3, ws.max_row + 1):
+                            for r in range(3, ws.max_row + 1):  # données à partir de la ligne 3
                                 if str(ws.cell(r, col_veh).value or "").strip() == choice:
                                     rows_to_delete.append(r)
-
+    
                             if not rows_to_delete:
                                 st.warning("Aucune ligne trouvée pour ce véhicule.")
                             else:
                                 for r in reversed(rows_to_delete):
                                     ws.delete_rows(r, 1)
-
+    
                                 out = BytesIO(); wb.save(out); out.seek(0)
                                 drive_upload(st.secrets["drive"]["vehicules"], out.getvalue())
-                                st.session_state["veh_buf"] = BytesIO(out.getvalue()); st.session_state["veh_buf"].seek(0)
-
+    
+                                # Rebind en session puis aperçu à jour
+                                st.session_state["veh_buf"] = BytesIO(out.getvalue())
+                                st.session_state["veh_buf"].seek(0)
+    
                                 st.success(f"✅ « {choice} » supprimé ({len(rows_to_delete)} ligne(s)).")
-                                # Aperçu à jour
                                 dfv2 = _veh_list_df()
                                 if not dfv2.empty:
                                     st.dataframe(dfv2, use_container_width=True)
+    
                         except Exception as e:
                             st.error(f"Erreur pendant la suppression : {e}")
-
+    
 
 # ==============================
 # Fonction pour géocoder via Google
@@ -1866,6 +1886,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
