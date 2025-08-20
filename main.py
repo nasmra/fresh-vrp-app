@@ -703,110 +703,64 @@ if st.sidebar.button("🔄 Recharger depuis Drive"):
     st.rerun()
 
 # --- Tasbih (sidebar) : 3×33 ---
+# --- Tasbih (sidebar) : chaque phrase est un bouton, le nombre à côté ---
 with st.sidebar:
-    # Style léger + RTL pour l'arabe
+    # CSS léger
     st.markdown("""
     <style>
-      .tasbih-card{
-        background:#fff;border:1px solid rgba(12,61,145,.25);
-        border-radius:12px;padding:12px 14px;margin-top:16px;
-        box-shadow:0 6px 14px rgba(7,28,71,.06);
-      }
-      .rtl{direction:rtl;text-align:right}
-      .tas-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.25rem 0 .6rem}
-      .tas-phrase{font-weight:700}
+      .tasbih-card{background:#fff;border:1px solid rgba(12,61,145,.25);border-radius:12px;padding:12px 14px;
+                   margin-top:16px;box-shadow:0 6px 14px rgba(7,28,71,.06);}
+      .tas-title{font-weight:800;margin-bottom:6px}
+      .tas-row{display:flex;align-items:center;gap:.5rem;margin:.35rem 0}
+      .tas-count{font-weight:700;padding:.25rem .55rem;border-radius:999px;border:1px solid rgba(12,61,145,.25);
+                 background:#F3F6FB;min-width:68px;text-align:center}
+      .rtl-btn button{direction:rtl;text-align:right;font-weight:700}
       .tas-sub{opacity:.8;font-size:.9rem}
-      .tas-mini{display:flex;gap:.4rem}
-      .tas-mini button{min-width:70px}
     </style>
     """, unsafe_allow_html=True)
 
     # État persistant
     if "tas_counts" not in st.session_state:
-        st.session_state.tas_counts = [0, 0, 0]      # [Subhanallah, Alhamdulillah, Allahu Akbar]
-    if "tas_phase" not in st.session_state:
-        st.session_state.tas_phase = 0               # 0→1→2
+        st.session_state.tas_counts = [0, 0, 0]  # [Subhanallah, Alhamdulillah, Allahu Akbar]
 
-    phrases = [
-        {"ar": "سبحان الله", "tr": "Subhanallah"},
-        {"ar": "الحمد لله",   "tr": "Alhamdulillah"},
-        {"ar": "الله أكبر",   "tr": "Allahu Akbar"},
-    ]
+    phrases_ar = ["سبحان الله", "الحمد لله", "الله أكبر"]
     TARGET = 33
 
     st.markdown('<div class="tasbih-card">', unsafe_allow_html=True)
-    st.markdown('''
-      <div class="tas-row">
-        <div>
-          <div class="rtl tas-phrase">🧿 تَسبيح</div>
-          <div class="tas-sub">Clique pour compter. Passage automatique au suivant à 33.</div>
-        </div>
-        <div class="tas-sub">Cycle: {}/99</div>
-      </div>
-    '''.format(sum(st.session_state.tas_counts)), unsafe_allow_html=True)
+    total = sum(st.session_state.tas_counts)
+    st.markdown(f'<div class="tas-title">🧿 تَسبيح <span class="tas-sub">(Total : {total}/99)</span></div>',
+                unsafe_allow_html=True)
 
-    # --- Trois blocs (le nombre est un bouton qui incrémente) ---
-    for idx, ph in enumerate(phrases):
-        ar = ph["ar"]; tr = ph["tr"]
-        cnt = st.session_state.tas_counts[idx]
-        done = cnt >= TARGET
+    # 3 lignes : bouton (phrase) + compteur à droite
+    for i, ar in enumerate(phrases_ar):
+        cnt = st.session_state.tas_counts[i]
+        col_btn, col_cnt = st.columns([4, 1])
 
-        st.markdown(f'''
-          <div class="tas-row">
-            <div class="rtl">
-              <div class="tas-phrase">{ar}</div>
-              <div class="tas-sub">{tr}</div>
-            </div>
-            <div class="tas-mini"></div>
-          </div>
-        ''', unsafe_allow_html=True)
+        with col_btn:
+            # La phrase elle-même est le bouton
+            clicked = st.button(ar, key=f"tas_btn_{i}", use_container_width=True, disabled=(cnt >= TARGET))
+            if clicked and st.session_state.tas_counts[i] < TARGET:
+                st.session_state.tas_counts[i] += 1
+                # Forcer un rerun pour rafraîchir le compteur immédiatement (optionnel)
+                st.rerun()
 
-        # Bouton compteur (n'augmente plus au-delà de 33)
-        if st.button(f"{cnt} / {TARGET}", key=f"tas_cnt_{idx}"):
-            if st.session_state.tas_counts[idx] < TARGET:
-                st.session_state.tas_counts[idx] += 1
-                # Met à jour la phase courante vers le premier inachevé
-                for j in range(3):
-                    if st.session_state.tas_counts[j] < TARGET:
-                        st.session_state.tas_phase = j
-                        break
-
-        # Boutons + / - (facultatif, pratiques si erreur de clic)
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("➕ +1", key=f"tas_plus_{idx}"):
-                if st.session_state.tas_counts[idx] < TARGET:
-                    st.session_state.tas_counts[idx] += 1
-                    for j in range(3):
-                        if st.session_state.tas_counts[j] < TARGET:
-                            st.session_state.tas_phase = j
-                            break
-        with c2:
-            if st.button("➖ -1", key=f"tas_minus_{idx}"):
-                if st.session_state.tas_counts[idx] > 0:
-                    st.session_state.tas_counts[idx] -= 1
-                    st.session_state.tas_phase = idx
-
-        # Barre de progression discrète
-        st.progress(min(st.session_state.tas_counts[idx] / TARGET, 1.0))
+        with col_cnt:
+            st.markdown(f'<div class="tas-count">{cnt} / {TARGET}</div>', unsafe_allow_html=True)
 
     # Actions globales
-    colA, colB, colC = st.columns([1,1,1])
-    with colA:
-        if st.button("↺ Réinitialiser", key="tas_reset"):
-            st.session_state.tas_counts = [0,0,0]
-            st.session_state.tas_phase = 0
-    with colB:
-        if st.button("◀ Précédent", key="tas_prev"):
-            st.session_state.tas_phase = max(0, st.session_state.tas_phase - 1)
-    with colC:
-        if st.button("Suivant ▶", key="tas_next"):
-            st.session_state.tas_phase = min(2, st.session_state.tas_phase + 1)
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("↺ Réinitialiser", key="tas_reset_all"):
+            st.session_state.tas_counts = [0, 0, 0]
+            st.rerun()
+    with c2:
+        if all(c >= TARGET for c in st.session_state.tas_counts):
+            st.success("Terminé ✅")
+        else:
+            st.markdown("&nbsp;", unsafe_allow_html=True)
 
-    # Message fin de cycle
-    if all(c >= TARGET for c in st.session_state.tas_counts):
-        st.success("✅ Tasbih complété : 33 + 33 + 33.")
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 # ====================== ONGLETS PRINCIPAUX ======================
@@ -1632,6 +1586,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
