@@ -1642,12 +1642,6 @@ with tab_vehicles:
                 except Exception as e:
                     st.error(f"Erreur lors de l'enregistrement : {e}")
 
-
-
-
-
-
-
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_del:
         # Aperçu courant du fichier véhicules
@@ -1666,6 +1660,7 @@ with tab_vehicles:
                 st.write("Aperçu de la ligne :")
                 st.dataframe(dfv.loc[dfv["Véhicule"].astype(str) == choice], use_container_width=True)
     
+                # Alerte rouge
                 st.markdown(
                     "<span style='color:#f43f5e;font-weight:700;'>"
                     "⚠️ Action irréversible : suppression de la/les ligne(s) correspondantes."
@@ -1673,34 +1668,22 @@ with tab_vehicles:
                     unsafe_allow_html=True
                 )
     
-                # === Styles SCOPÉS (ID) : forcer le label en ROUGE + réduire l'écart ===
-                st.markdown("""
-                <style>
-                  /* Tout texte dans ce conteneur = ROUGE */
-                  #veh-del-scope, #veh-del-scope * {
-                      color:#ff4d4d !important;
-                      -webkit-text-fill-color:#ff4d4d !important;
-                      text-shadow:0 0 0 #ff4d4d; /* ancre la couleur dans certains thèmes */
-                  }
-                  /* Réduire l'écart entre case et texte */
-                  #veh-del-scope div[data-testid="stCheckbox"] label{
-                      display:inline-flex; align-items:center; gap:8px !important; margin:0 !important;
-                  }
-                </style>
-                """, unsafe_allow_html=True)
-    
-                # Conteneur scopé (label du checkbox en rouge)
-                st.markdown('<div id="veh-del-scope">', unsafe_allow_html=True)
-                ok = st.checkbox("Je comprends que cette action est irréversible.", key="veh_del_ack")
-                st.markdown('</div>', unsafe_allow_html=True)
+                # Texte (rouge) sans checkbox
+                st.markdown(
+                    "<div style='color:#ff4d4d; font-weight:700; margin:8px 0 6px;'>"
+                    "Je comprends que cette action est irréversible. "
+                    "Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
+                    "</div>",
+                    unsafe_allow_html=True
+                )
     
                 # Confirmation texte
                 txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
     
                 # Bouton d'exécution
                 if st.button("🗑️ Confirmer suppression", key="veh_del_btn"):
-                    if (not ok) or (st.session_state.get("veh_del_text", "").strip().upper() != "SUPPRIMER"):
-                        st.error("Confirme en cochant la case et en tapant exactement SUPPRIMER.")
+                    if st.session_state.get("veh_del_text", "").strip().upper() != "SUPPRIMER":
+                        st.error("Saisis exactement SUPPRIMER pour confirmer.")
                     else:
                         try:
                             # Ouvrir, supprimer, sauvegarder, uploader
@@ -1900,6 +1883,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
