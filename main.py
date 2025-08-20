@@ -704,63 +704,115 @@ if st.sidebar.button("🔄 Recharger depuis Drive"):
 
 # --- Tasbih (sidebar) : 3×33 ---
 # --- Tasbih (sidebar) : chaque phrase est un bouton, le nombre à côté ---
+# --- Tasbih (sidebar) : 3×33 avec barre de progression et dhikr final ---
 with st.sidebar:
-    # CSS léger
+    # Styles
     st.markdown("""
     <style>
-      .tasbih-card{background:#fff;border:1px solid rgba(12,61,145,.25);border-radius:12px;padding:12px 14px;
-                   margin-top:16px;box-shadow:0 6px 14px rgba(7,28,71,.06);}
-      .tas-title{font-weight:800;margin-bottom:6px}
-      .tas-row{display:flex;align-items:center;gap:.5rem;margin:.35rem 0}
-      .tas-count{font-weight:700;padding:.25rem .55rem;border-radius:999px;border:1px solid rgba(12,61,145,.25);
-                 background:#F3F6FB;min-width:68px;text-align:center}
-      .rtl-btn button{direction:rtl;text-align:right;font-weight:700}
-      .tas-sub{opacity:.8;font-size:.9rem}
+      .tasbih-card{
+        background:#fff;border:1px solid rgba(12,61,145,.25);
+        border-radius:12px;padding:12px 14px;margin-top:16px;
+        box-shadow:0 6px 14px rgba(7,28,71,.06);
+      }
+      .tas-title{font-weight:800;margin:6px 0 8px}
+      .tas-count{
+        font-weight:700;padding:.25rem .55rem;border-radius:999px;
+        border:1px solid rgba(12,61,145,.25); background:#F3F6FB;
+        min-width:68px;text-align:center
+      }
+      .rtl-btn button{direction:rtl;text-align:center;font-weight:700}
+      .tas-zikr{
+        direction:rtl;text-align:right;margin-top:10px;padding:10px 12px;
+        border-radius:10px;border:1px dashed #22c55e;background:#f6fff6;font-weight:700
+      }
+
+      /* Barre de progression 0→99 */
+      .tasbar{position:relative;height:18px;border-radius:999px;
+              background:#eef2fb;border:1px solid rgba(12,61,145,.20);
+              overflow:hidden;margin:2px 0 10px;}
+      .tasbar-fill{height:100%;
+              background:linear-gradient(90deg,#F7941D,#FFB347);
+              transition:width .25s ease;}
+      .tasbar-text{position:absolute;inset:0;display:flex;align-items:center;
+              justify-content:center;font-weight:700;font-size:12px;color:#0B1F44;}
+      .tasbar-tick{position:absolute;top:0;bottom:0;width:2px;
+              background:rgba(0,0,0,.10);transform:translateX(-1px);}
+      @media (prefers-reduced-motion: reduce){ .tasbar-fill{transition:none;} }
     </style>
     """, unsafe_allow_html=True)
 
     # État persistant
     if "tas_counts" not in st.session_state:
         st.session_state.tas_counts = [0, 0, 0]  # [Subhanallah, Alhamdulillah, Allahu Akbar]
+    if "tas_done" not in st.session_state:
+        st.session_state.tas_done = False
 
     phrases_ar = ["سبحان الله", "الحمد لله", "الله أكبر"]
     TARGET = 33
 
-    st.markdown('<div class="tasbih-card">', unsafe_allow_html=True)
-    total = sum(st.session_state.tas_counts)
-    st.markdown(f'<div class="tas-title">تَسبيح <span class="tas-sub">(Total : {total}/99)</span></div>',
-                unsafe_allow_html=True)
+    # Helper
+    def _update_done():
+        st.session_state.tas_done = all(c >= TARGET for c in st.session_state.tas_counts)
 
-    # 3 lignes : bouton (phrase) + compteur à droite
+    st.markdown('<div class="tasbih-card">', unsafe_allow_html=True)
+
+    # --- Barre de progression 0→99 (en haut) ---
+    total = sum(st.session_state.tas_counts)
+    pct   = int(round(min(total, 99) / 99 * 100))
+    st.markdown(f"""
+    <div class="tasbar" aria-label="Progression tasbih">
+      <div class="tasbar-fill" style="width:{pct}%"></div>
+      <div class="tasbar-text">{total} / 99</div>
+      <span class="tasbar-tick" style="left:{33/99*100}%"></span>
+      <span class="tasbar-tick" style="left:{66/99*100}%"></span>
+      <span class="tasbar-tick" style="left:100%"></span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Titre
+    st.markdown('<div class="tas-title">🧿 تَسبيح</div>', unsafe_allow_html=True)
+
+    # --- Trois lignes : bouton = phrase + compteur à droite ---
     for i, ar in enumerate(phrases_ar):
         cnt = st.session_state.tas_counts[i]
         col_btn, col_cnt = st.columns([4, 1])
 
         with col_btn:
-            # La phrase elle-même est le bouton
+            st.markdown('<div class="rtl-btn">', unsafe_allow_html=True)
             clicked = st.button(ar, key=f"tas_btn_{i}", use_container_width=True, disabled=(cnt >= TARGET))
-            if clicked and st.session_state.tas_counts[i] < TARGET:
+            st.markdown('</div>', unsafe_allow_html=True)
+            if clicked and cnt < TARGET:
                 st.session_state.tas_counts[i] += 1
-                # Forcer un rerun pour rafraîchir le compteur immédiatement (optionnel)
-                st.rerun()
+                _update_done()
+                st.rerun()  # refresh immédiat
 
         with col_cnt:
             st.markdown(f'<div class="tas-count">{cnt} / {TARGET}</div>', unsafe_allow_html=True)
 
-    # Actions globales
+    # --- Dhikr final (apparaît seulement quand 3×33 terminés) ---
+    if st.session_state.tas_done:
+        st.markdown(
+            '<div class="tas-zikr">'
+            'لَا إِلَهَ إِلَّا ٱللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، '
+            'لَهُ ٱلْمُلْكُ وَلَهُ ٱلْحَمْدُ، وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+    # Actions
     c1, c2 = st.columns(2)
     with c1:
         if st.button("↺ Réinitialiser", key="tas_reset_all"):
             st.session_state.tas_counts = [0, 0, 0]
+            st.session_state.tas_done = False
             st.rerun()
     with c2:
-        if all(c >= TARGET for c in st.session_state.tas_counts):
+        if st.session_state.tas_done:
             st.success("Terminé ✅")
         else:
             st.markdown("&nbsp;", unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 
 # ====================== ONGLETS PRINCIPAUX ======================
@@ -1586,6 +1638,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
