@@ -144,6 +144,11 @@ def update_kilometrage_file(workbook, delivery_data):
 
 
 def update_distance_parcourue(workbook):
+    """Met à jour 'Distance parcourue (km)' et supprime tous les 0 inutiles.
+       - Écrit uniquement sur les lignes réellement utilisées (Nom/Prénom/Véhicule).
+       - Cache les 0 pour les chauffeurs 'Temporaire'.
+       - Reconstruit la colonne pour effacer d’éventuels résidus.
+    """
     if not {"Liste", "Kilométrage"}.issubset(workbook.sheetnames):
         return
     ws_list = workbook["Liste"]
@@ -170,27 +175,28 @@ def update_distance_parcourue(workbook):
         # enlève “Chauffeur 3 :”, “chauffeur 12:”, etc.
         return re.sub(r"^\s*chauffeur\s*\d+\s*:\s*", "", str(nom or ""), flags=re.I)
 
-    # --- Sommes depuis Kilométrage (clé = nom complet normalisé)
+    # --- Agrégat depuis 'Kilométrage' (clé = nom complet normalisé)
     totals = defaultdict(float)
     for _, chauffeur, _, dist in ws_km.iter_rows(min_row=2, values_only=True):
         if not chauffeur:
             continue
         totals[_norm_text(chauffeur)] += _to_float(dist)
 
-    # --- Colonnes de la feuille Liste
+    # --- Utilitaires colonnes de 'Liste'
     headers = [cell.value for cell in ws_list[1]]
     def _col(name): return headers.index(name) + 1 if name in headers else None
 
     col_nom  = _col("Nom")
     col_pre  = _col("Prénom")
     col_veh  = _col("Véhicule affecté")
+    col_stat = _col("Statut")
+    old_col_dist = _col("Distance parcourue (km)")
 
-    col_dist = _col("Distance parcourue (km)")
-    if col_dist is None:
-        col_dist = (len(headers) + 1)
-        ws_list.cell(1, col_dist, "Distance parcourue (km)")
+    # Nouvelle colonne (temporaire) juste à droite de l'ancienne, ou à la fin
+    insert_at = (old_col_dist + 1) if old_col_dist else (len(headers) + 1)
+    ws_list.insert_cols(insert_at)
+    ws_list.cell(1, insert_at, "Distance parcourue (km)")
 
-    # --- Détecte la dernière ligne réellement utilisée (Nom/Prénom/Véhicule non vides)
     def _row_used(r: int) -> bool:
         fields = []
         for c in (col_nom, col_pre, col_veh):
@@ -198,28 +204,31 @@ def update_distance_parcourue(workbook):
                 fields.append(str(ws_list.cell(r, c).value or "").strip())
         return any(fields)
 
-    last_used = 1
-    for r in range(2, ws_list.max_row + 1):
-        if _row_used(r):
-            last_used = r
-
-    # --- Vide la colonne distance sous la dernière ligne utilisée
-    for r in range(last_used + 1, ws_list.max_row + 1):
-        ws_list.cell(r, col_dist, None)
-
-    # --- Met à jour uniquement les lignes utilisées ; vide celles totalement vides
-    for r in range(2, last_used + 1):
+    # Écrit uniquement sur les lignes réellement utilisées
+    last_row = ws_list.max_row or 1
+    for r in range(2, last_row + 1):
         if not _row_used(r):
-            ws_list.cell(r, col_dist, None)
+            # on laisse vide (pas de 0)
             continue
-
         nom    = ws_list.cell(r, col_nom).value if col_nom else ""
         prenom = ws_list.cell(r, col_pre).value if col_pre else ""
+        statut = (ws_list.cell(r, col_stat).value if col_stat else "") or ""
+        statut = str(statut).strip().lower()
+
         k1 = _norm_text(f"{nom} {prenom}")
         k2 = _norm_text(f"{_strip_prefix_nom(nom)} {prenom}")
-
         val = totals.get(k1, totals.get(k2, 0.0))
-        ws_list.cell(r, col_dist, round(val, 1))
+
+        # Masque les 0 pour les temporaires
+        if statut.startswith("temp") and abs(val) < 1e-9:
+            continue
+
+        ws_list.cell(r, insert_at, round(val, 1))
+
+    # Supprime l’ancienne colonne (avec ses zéros), si elle existait
+    if old_col_dist:
+        ws_list.delete_cols(old_col_dist, 1)
+
 
 # ======================================================
 # Post-traitements de routes (km réels + redistribution)
@@ -581,6 +590,7 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
 
 
