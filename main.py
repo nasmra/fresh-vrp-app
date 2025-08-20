@@ -1646,6 +1646,7 @@ with tab_vehicles:
 
 
 
+
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_del:
         # Aperçu courant du fichier véhicules
@@ -1671,18 +1672,33 @@ with tab_vehicles:
                     unsafe_allow_html=True
                 )
     
-                # ==== Case à cocher : écart réduit + libellé BLANC garanti ====
-                # - colonnes très resserrées (gap petit)
-                # - label du checkbox masqué; on affiche notre propre libellé avec style inline + !important
-                cb_col, txt_col = st.columns([0.14, 0.86], gap="small")
+                # ============ Libellé BLANC + espace réduit ============
+                # CSS dédié (au cas où) + style inline pour battre tout style global
+                st.markdown("""
+                <style>
+                  .veh-agree-lbl{
+                    color:#fff !important;
+                    -webkit-text-fill-color:#fff !important;   /* Chrome/WebKit */
+                    text-shadow:0 0 0 #fff;                    /* "ancre" la couleur dans certains thèmes */
+                    font-weight:600; line-height:1.25;
+                    display:inline-block; margin:6px 0 0 0;
+                  }
+                </style>
+                """, unsafe_allow_html=True)
+    
+                # Case sans label + libellé custom juste à côté (colonnes serrées)
+                cb_col, txt_col = st.columns([0.10, 0.90], gap="small")
                 with cb_col:
                     ok = st.checkbox("", key="veh_del_ack", label_visibility="collapsed")
                 with txt_col:
                     st.markdown(
-                        '<span style="color:#FFFFFF !important; font-weight:600; display:inline-block; '
-                        'line-height:1.25; margin:0;">Je comprends que cette action est irréversible.</span>',
+                        '<span class="veh-agree-lbl" '
+                        'style="color:#FFFFFF !important;-webkit-text-fill-color:#FFFFFF !important;">'
+                        'Je comprends que cette action est irréversible.'
+                        '</span>',
                         unsafe_allow_html=True
                     )
+                # =========================================================
     
                 # Confirmation texte
                 txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
@@ -1725,7 +1741,7 @@ with tab_vehicles:
     
                         except Exception as e:
                             st.error(f"Erreur pendant la suppression : {e}")
-    
+
 
 # ==============================
 # Fonction pour géocoder via Google
@@ -1891,6 +1907,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
