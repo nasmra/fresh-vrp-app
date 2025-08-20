@@ -1660,18 +1660,12 @@ with tab_vehicles:
                 st.write("Aperçu de la ligne :")
                 st.dataframe(dfv.loc[dfv["Véhicule"].astype(str) == choice], use_container_width=True)
     
-                # Alerte rouge
-                st.markdown(
-                    "<span style='color:#f43f5e;font-weight:700;'>"
-                    "⚠️ Action irréversible : suppression de la/les ligne(s) correspondantes."
-                    "</span>",
-                    unsafe_allow_html=True
-                )
+
     
                 # Texte (rouge) sans checkbox
                 st.markdown(
                     "<div style='color:#ff4d4d; font-weight:700; margin:8px 0 6px;'>"
-                    "Je comprends que cette action est irréversible. "
+                    "⚠️ Je comprends que cette action est irréversible. "
                     "Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
                     "</div>",
                     unsafe_allow_html=True
@@ -1883,6 +1877,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
