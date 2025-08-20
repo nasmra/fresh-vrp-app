@@ -1380,9 +1380,10 @@ with tab_drivers:
                 st.warning(f"Impossible d'afficher la liste des chauffeurs : {_e}")
 
 
+
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_tab_del:
-        _deferred_reset("_reset_del_form", ["del_choice", "del_text"])  # plus de del_ack
+        _deferred_reset("_reset_del_form", ["del_choice", "del_text"])  # pas de del_ack ici
     
         _chauff_buf = st.session_state.get("chauff_buf")
         if not _chauff_buf:
@@ -1482,7 +1483,7 @@ with tab_drivers:
                                         f"({len(rows_to_delete)} ligne(s))."
                                     )
     
-                                    # 👉 Afficher la liste restante (comme pour les véhicules)
+                                    # 👉 Afficher la liste restante (sans toucher au selectbox)
                                     try:
                                         st.session_state["chauff_buf"].seek(0)
                                         df_ch_updated = pd.read_excel(st.session_state["chauff_buf"], sheet_name="Liste")
@@ -1491,12 +1492,14 @@ with tab_drivers:
                                     except Exception as _e:
                                         st.warning(f"Impossible d'afficher la liste mise à jour : {_e}")
     
-                                    # Optionnel : réinitialiser la sélection dans l'UI (sans rerun)
-                                    st.session_state["del_choice"] = "— Aucun —"
+                                    # 👉 Optionnel : bouton pour réinitialiser proprement la sélection
+                                    if st.button("↺ Réinitialiser la sélection"):
+                                        st.session_state["_reset_del_form"] = True
+                                        st.rerun()
     
                             except Exception as e:
                                 st.error(f"Erreur pendant la suppression : {e}")
-
+    
 
 # =========================================================
 #                ONGLET GESTION DES VÉHICULES
@@ -1896,3 +1899,4 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
