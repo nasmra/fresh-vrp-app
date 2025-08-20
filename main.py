@@ -823,11 +823,13 @@ with st.sidebar:
 # ====================== ONGLETS PRINCIPAUX ======================
 # ====================== ONGLETS PRINCIPAUX ======================
 # AVANT : tab_opt, tab_add = st.tabs(["🚚 Optimisation", "➕ Ajouter un client"])
-tab_opt, tab_add, tab_drivers = st.tabs([
+tab_opt, tab_add, tab_drivers, tab_vehicles = st.tabs([
     "🚚 Optimisation",
     "➕ Ajouter un client",
-    "👷 Gestion des chauffeurs"
+    "👷 Gestion des chauffeurs",
+    "🚛 Gestion des véhicules",
 ])
+
 
 # =========================================================
 #                        ONGLET OPTIMISATION
@@ -1477,6 +1479,205 @@ with tab_drivers:
                             except Exception as e:
                                 st.error(f"Erreur pendant la suppression : {e}")
 
+# =========================================================
+#                ONGLET GESTION DES VÉHICULES
+# =========================================================
+with tab_vehicles:
+    st.header("🚛 Gestion des véhicules")
+
+    if not st.session_state.get("veh_buf"):
+        st.info("Fichier Véhicules introuvable sur Drive.")
+        st.stop()
+
+    # ---------- Helpers locaux ----------
+    from openpyxl import load_workbook
+
+    def _veh_ws(wb):
+        """Retourne la feuille véhicules (on prend la 1re qui contient l'en-tête en ligne 2)."""
+        for ws in wb.worksheets:
+            headers = [str(c.value or "").strip() for c in ws[2]]
+            if headers and any("Véhicule" == h for h in headers):
+                return ws
+        return wb.worksheets[0]
+
+    def _veh_columns(ws):
+        """Retourne les index colonnes (1-based) pour les en-têtes attendus (ligne 2). Ajoute si manquantes."""
+        def headers_map():
+            return {str(ws.cell(2, c).value or "").strip(): c for c in range(1, ws.max_column + 1)}
+        hdr = headers_map()
+
+        def ensure_col(name):
+            if name in hdr:
+                return hdr[name]
+            col = ws.max_column + 1
+            ws.cell(2, col, name)
+            return col
+
+        col_veh  = ensure_col("Véhicule")
+        col_w    = ensure_col("Poids (kg)")
+        col_pal  = ensure_col("Palettes")
+        # Cartons peut s'appeler "Cartons (30 unités de pain)" → on garde l'existant si trouvé
+        col_car  = next((c for h, c in hdr.items() if str(h).lower().startswith("cartons")), None)
+        if not col_car:
+            col_car = ensure_col("Cartons (30 unités de pain)")
+        col_info = ensure_col("Informations supplémentaires")
+        return col_veh, col_w, col_pal, col_car, col_info
+
+    def _row_used(ws, r, key_cols):
+        """Vraie ligne de données ? (au moins une des colonnes clés non vide)"""
+        for c in key_cols:
+            if str(ws.cell(r, c).value or "").strip():
+                return True
+        return False
+
+    def _first_empty_row(ws, start=3, key_cols=None):
+        """Première ligne vide (après la dernière réellement utilisée). Données commencent à la ligne 3."""
+        if key_cols is None:
+            key_cols = [1, 2, 3, 4, 5]
+        last_used = start - 1
+        for r in range(start, (ws.max_row or start - 1) + 1):
+            if _row_used(ws, r, key_cols):
+                last_used = r
+        return last_used + 1
+
+    def _veh_list_df():
+        """Aperçu pandas des véhicules (utile après actions)."""
+        st.session_state["veh_buf"].seek(0)
+        try:
+            return pd.read_excel(st.session_state["veh_buf"], skiprows=1)
+        except Exception:
+            return pd.DataFrame()
+
+    def _norm_key(s: str) -> str:
+        import re, unicodedata
+        s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode("ascii")
+        return re.sub(r"\s+", " ", s).strip().lower()
+
+    sub_add, sub_del = st.tabs(["➕ Ajouter un véhicule", "🗑️ Supprimer définitivement"])
+
+    # -------------------- ➕ AJOUTER --------------------
+    with sub_add:
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            vname = st.text_input("Véhicule", placeholder="Ex. MERCEDES VITO GC-246-FY")
+            info  = st.text_input("Informations supplémentaires", placeholder="Ex. 200kg devant porte latérale")
+        with col2:
+            poids = st.number_input("Poids (kg)", min_value=0, step=10, value=0)
+            pal   = st.number_input("Palettes", min_value=0, step=1, value=0)
+            car   = st.number_input("Cartons (30 unités de pain)", min_value=0, step=1, value=0)
+
+        with st.form("form_add_vehicle", clear_on_submit=False):
+            confirm = st.selectbox("Confirmer l'ajout/MAJ ?", ["Non", "Oui"], index=0)
+            ok = st.form_submit_button("💾 Enregistrer le véhicule")
+
+            if ok:
+                if not vname.strip():
+                    st.error("Renseigne le nom du véhicule."); st.stop()
+                if confirm != "Oui":
+                    st.error("Merci de confirmer l'ajout/MAJ."); st.stop()
+
+                try:
+                    # Ouvrir le fichier d'origine
+                    st.session_state["veh_buf"].seek(0)
+                    original = st.session_state["veh_buf"].read()
+                    wb = load_workbook(BytesIO(original))
+                    ws = _veh_ws(wb)
+                    col_veh, col_w, col_pal, col_car, col_info = _veh_columns(ws)
+
+                    # Chercher si le véhicule existe déjà (MAJ en place)
+                    found_row = None
+                    key_cols = [col_veh, col_w, col_pal, col_car, col_info]
+                    for r in range(3, ws.max_row + 1):
+                        if not _row_used(ws, r, key_cols):
+                            continue
+                        if _norm_key(ws.cell(r, col_veh).value) == _norm_key(vname):
+                            found_row = r
+                            break
+
+                    if found_row is None:
+                        target_row = _first_empty_row(ws, start=3, key_cols=key_cols)
+                    else:
+                        target_row = found_row
+
+                    # Écriture
+                    ws.cell(target_row, col_veh,  vname.strip())
+                    ws.cell(target_row, col_w,    int(poids))
+                    ws.cell(target_row, col_pal,  int(pal))
+                    ws.cell(target_row, col_car,  int(car))
+                    ws.cell(target_row, col_info, info.strip())
+
+                    # Sauvegarde + upload
+                    out = BytesIO(); wb.save(out); out.seek(0)
+                    drive_upload(st.secrets["drive"]["vehicules"], out.getvalue())
+
+                    # Rebind session
+                    st.session_state["veh_buf"] = BytesIO(out.getvalue()); st.session_state["veh_buf"].seek(0)
+
+                    st.success("✅ Véhicule enregistré (ajout/MAJ).")
+                    dfv = _veh_list_df()
+                    if not dfv.empty:
+                        st.dataframe(dfv, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Erreur lors de l'enregistrement : {e}")
+
+    # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
+    with sub_del:
+        try:
+            dfv = _veh_list_df()
+        except Exception:
+            dfv = pd.DataFrame()
+
+        if dfv.empty or "Véhicule" not in dfv.columns:
+            st.info("Aucun véhicule exploitable.")
+        else:
+            vehs = ["— Aucun —"] + sorted([v for v in dfv["Véhicule"].astype(str).dropna().unique() if v.strip()])
+            choice = st.selectbox("Sélectionner le véhicule à supprimer", vehs, index=0)
+
+            if choice != "— Aucun —":
+                st.write("Aperçu de la ligne :")
+                st.dataframe(dfv.loc[dfv["Véhicule"].astype(str) == choice], use_container_width=True)
+
+                st.markdown(
+                    "<span style='color:red;font-weight:600;'>⚠️ Action irréversible : suppression de la/les ligne(s) correspondantes.</span>",
+                    unsafe_allow_html=True
+                )
+                ok = st.checkbox("Je comprends que cette action est irréversible.", key="veh_del_ack")
+                txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
+
+                if st.button("🗑️ Confirmer suppression"):
+                    if not ok or st.session_state.get("veh_del_text","").strip().upper() != "SUPPRIMER":
+                        st.error("Confirme en cochant la case et en tapant exactement SUPPRIMER.")
+                    else:
+                        try:
+                            st.session_state["veh_buf"].seek(0)
+                            original = st.session_state["veh_buf"].read()
+                            wb = load_workbook(BytesIO(original))
+                            ws = _veh_ws(wb)
+                            col_veh, col_w, col_pal, col_car, col_info = _veh_columns(ws)
+
+                            # Trouver les lignes à supprimer
+                            rows_to_delete = []
+                            for r in range(3, ws.max_row + 1):
+                                if str(ws.cell(r, col_veh).value or "").strip() == choice:
+                                    rows_to_delete.append(r)
+
+                            if not rows_to_delete:
+                                st.warning("Aucune ligne trouvée pour ce véhicule.")
+                            else:
+                                for r in reversed(rows_to_delete):
+                                    ws.delete_rows(r, 1)
+
+                                out = BytesIO(); wb.save(out); out.seek(0)
+                                drive_upload(st.secrets["drive"]["vehicules"], out.getvalue())
+                                st.session_state["veh_buf"] = BytesIO(out.getvalue()); st.session_state["veh_buf"].seek(0)
+
+                                st.success(f"✅ « {choice} » supprimé ({len(rows_to_delete)} ligne(s)).")
+                                # Aperçu à jour
+                                dfv2 = _veh_list_df()
+                                if not dfv2.empty:
+                                    st.dataframe(dfv2, use_container_width=True)
+                        except Exception as e:
+                            st.error(f"Erreur pendant la suppression : {e}")
 
 
 # ==============================
@@ -1643,6 +1844,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
