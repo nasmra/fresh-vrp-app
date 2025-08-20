@@ -1432,16 +1432,10 @@ with tab_drivers:
                     st.dataframe(df_ch.loc[mask, show_cols], use_container_width=True)
     
                     # Alerte rouge + consigne
-                    st.markdown(
-                        "<span style='color:#f43f5e; font-weight:700;'>"
-                        "⚠️ Action irréversible : seules les lignes de la feuille 'Liste' seront supprimées. "
-                        "Les autres feuilles (dont 'Kilométrage') ne seront pas modifiées."
-                        "</span>",
-                        unsafe_allow_html=True
-                    )
+
                     st.markdown(
                         "<div style='color:#ff4d4d; font-weight:700; margin:8px 0 6px;'>"
-                        "Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
+                        "⚠️ Je comprends que cette action est irrversible. Pour confirmer, tapez <code>SUPPRIMER</code> ci-dessous."
                         "</div>",
                         unsafe_allow_html=True
                     )
@@ -1890,6 +1884,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
