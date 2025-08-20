@@ -1246,42 +1246,22 @@ with tab_drivers:
     ])
 
 
+
     # -------------------- ➕ AJOUTER UN CHAUFFEUR --------------------
     with sub_tab_add:
-        # reset différé des champs d'ajout (sera activé juste après un ajout réussi)
+        # reset différé des champs d'ajout (doit être exécuté AVANT la création des widgets)
         _deferred_reset("_reset_add_form", ["nom_input", "prenom_input", "vehicule_select", "confirm_add", "statut_select"])
     
-        # Si on vient d'ajouter quelqu'un, on n'affiche que la liste + un bouton pour ré-ouvrir le formulaire
-        if st.session_state.get("add_driver_done"):
-            # Message de succès (si stocké)
-            if st.session_state.get("add_driver_msg"):
-                st.success(st.session_state["add_driver_msg"])
+        # Message flash (succès) après rerun
+        if st.session_state.get("add_driver_msg"):
+            st.success(st.session_state["add_driver_msg"])
+            st.session_state.pop("add_driver_msg", None)  # on affiche une seule fois
     
-            # Liste mise à jour
-            if st.session_state.get("chauff_buf"):
-                try:
-                    st.session_state["chauff_buf"].seek(0)
-                    _df_list = pd.read_excel(st.session_state["chauff_buf"], sheet_name="Liste")
-                    st.markdown("### 📃 Liste des chauffeurs (mise à jour)")
-                    st.dataframe(_df_list, use_container_width=True)
-                except Exception as _e:
-                    st.warning(f"Impossible d'afficher la liste des chauffeurs : {_e}")
-    
-            # Bouton pour ré-ouvrir le formulaire
-            if st.button("➕ Ajouter un autre chauffeur"):
-                st.session_state["add_driver_done"] = False
-                st.session_state["_reset_add_form"] = True  # au cas où
-                st.rerun()
-    
-            # On s'arrête ici (pas de formulaire)
-            st.stop()
-    
-        # ----------- (sinon) on affiche le formulaire -----------
         col_a, col_b = st.columns(2)
         with col_a:
-            nom = st.text_input("Nom", "", key="nom_input")
+            nom = st.text_input("Nom", "", key="nom_input")  # vide par défaut
         with col_b:
-            prenom = st.text_input("Prénom", "", key="prenom_input")
+            prenom = st.text_input("Prénom", "", key="prenom_input")  # vide par défaut
     
         # Liste des véhicules depuis vehicles.xlsx (SEULE source)
         vehicule_options = ["— Sélectionner —"]
@@ -1299,11 +1279,11 @@ with tab_drivers:
         chosen_vehicle = st.selectbox(
             "Véhicule affecté (depuis la liste)",
             vehicule_options,
-            index=0,
+            index=0,                      # ← valeur par défaut
             key="vehicule_select"
         )
     
-        # Statut Permanent / Temporaire
+        # Statut (défaut = Permanent)
         statut = st.selectbox("Statut du chauffeur", ["Permanent", "Temporaire"], index=0, key="statut_select")
     
         # -------- FORMULAIRE AVEC CONFIRMATION + PROGRESSION --------
@@ -1335,7 +1315,7 @@ with tab_drivers:
                     # 2) Feuille 'Liste'
                     ws = _get_ws(wb, "Liste")
     
-                    # 3) Garantir les colonnes nécessaires, sans écraser les autres
+                    # 3) Garantir les colonnes nécessaires
                     prog.progress(35, text="Préparation de la feuille…")
                     headers_now = [ws.cell(1, c).value for c in range(1, ws.max_column + 1)]
                     if "Actif" in headers_now:
@@ -1378,16 +1358,15 @@ with tab_drivers:
     
                     prog.progress(100, text="Terminé ✅")
     
-                    # Signaler le succès, réinitialiser les champs et masquer le formulaire
+                    # ✅ Message de succès + RESET des champs aux VALEURS PAR DÉFAUT
                     st.session_state["add_driver_msg"]  = f"✅ {nom} {prenom} ajouté à la liste (ligne {target_row})."
-                    st.session_state["_reset_add_form"] = True   # purge des champs
-                    st.session_state["add_driver_done"] = True   # n'afficher que la liste au rerun
+                    st.session_state["_reset_add_form"] = True  # vide les widgets & revient aux index par défaut
                     st.rerun()
     
                 except Exception as e:
                     st.error(f"Erreur lors de l'enregistrement : {e}")
     
-        # (Si on est ici, c’est qu’on n’a pas encore ajouté — on peut afficher la liste courante en dessous)
+        # Liste courante en dessous (toujours visible)
         if st.session_state.get("chauff_buf"):
             try:
                 st.session_state["chauff_buf"].seek(0)
@@ -1396,7 +1375,6 @@ with tab_drivers:
                 st.dataframe(_df_list, use_container_width=True)
             except Exception as _e:
                 st.warning(f"Impossible d'afficher la liste des chauffeurs : {_e}")
-
 
 
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
@@ -1916,6 +1894,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
