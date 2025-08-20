@@ -1558,13 +1558,35 @@ with tab_vehicles:
     # -------------------- ➕ AJOUTER --------------------
     with sub_add:
         col1, col2 = st.columns([2, 1])
+    
         with col1:
             vname = st.text_input("Véhicule", placeholder="Ex. MERCEDES VITO GC-246-FY")
-            info  = st.text_input("Informations supplémentaires", placeholder="Ex. 200kg devant porte latérale")
+    
+            # --- Liste déroulante pour "Informations supplémentaires"
+            INFO_PRESETS = (
+                ["— Aucune —"]
+                + [f"{kg} kg devant porte latérale" for kg in range(50, 501, 50)]
+                + ["Autre…"]
+            )
+            preset = st.selectbox("Informations supplémentaires", INFO_PRESETS, index=0, key="veh_info_preset")
+    
+            # Si "Autre…", on affiche une saisie libre
+            custom_info = ""
+            if preset == "Autre…":
+                custom_info = st.text_input(
+                    "Préciser",
+                    placeholder="Ex. 200 kg devant porte latérale",
+                    key="veh_info_custom",
+                )
+    
+            # Normalisation finale (chaîne vide si « Aucune »)
+            info = "" if preset == "— Aucune —" else (custom_info.strip() if preset == "Autre…" else preset)
+    
         with col2:
             poids = st.number_input("Poids (kg)", min_value=0, step=10, value=0)
             pal   = st.number_input("Palettes", min_value=0, step=1, value=0)
             car   = st.number_input("Cartons (30 unités de pain)", min_value=0, step=1, value=0)
+
 
         with st.form("form_add_vehicle", clear_on_submit=False):
             confirm = st.selectbox("Confirmer l'ajout/MAJ ?", ["Non", "Oui"], index=0)
@@ -1844,6 +1866,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
