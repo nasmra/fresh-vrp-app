@@ -705,8 +705,9 @@ if st.sidebar.button("🔄 Recharger depuis Drive"):
 # --- Tasbih (sidebar) : 3×33 ---
 # --- Tasbih (sidebar) : chaque phrase est un bouton, le nombre à côté ---
 # --- Tasbih (sidebar) : 3×33 avec barre de progression et dhikr final ---
+# --- Tasbih (sidebar) : 3×33 + barre de progression + dhikr final ---
 with st.sidebar:
-    # Styles
+    # ===== Styles =====
     st.markdown("""
     <style>
       .tasbih-card{
@@ -715,17 +716,20 @@ with st.sidebar:
         box-shadow:0 6px 14px rgba(7,28,71,.06);
       }
       .tas-title{font-weight:800;margin:6px 0 8px}
+      .rtl-btn button{direction:rtl;text-align:center;font-weight:700}
       .tas-count{
         font-weight:700;padding:.25rem .55rem;border-radius:999px;
         border:1px solid rgba(12,61,145,.25); background:#F3F6FB;
         min-width:68px;text-align:center
       }
-      .rtl-btn button{direction:rtl;text-align:center;font-weight:700}
       .tas-zikr{
-        direction:rtl;text-align:right;margin-top:10px;padding:10px 12px;
-        border-radius:10px;border:1px dashed #22c55e;background:#f6fff6;font-weight:700
+        direction:rtl;text-align:right;
+        margin-top:20px;                /* Espace au-dessus du dhikr */
+        margin-bottom:6px;
+        padding:12px 14px;
+        border-radius:10px;border:1px dashed #22c55e;background:#f6fff6;
+        font-weight:700
       }
-
       /* Barre de progression 0→99 */
       .tasbar{position:relative;height:18px;border-radius:999px;
               background:#eef2fb;border:1px solid rgba(12,61,145,.20);
@@ -741,7 +745,7 @@ with st.sidebar:
     </style>
     """, unsafe_allow_html=True)
 
-    # État persistant
+    # ===== État =====
     if "tas_counts" not in st.session_state:
         st.session_state.tas_counts = [0, 0, 0]  # [Subhanallah, Alhamdulillah, Allahu Akbar]
     if "tas_done" not in st.session_state:
@@ -750,13 +754,12 @@ with st.sidebar:
     phrases_ar = ["سبحان الله", "الحمد لله", "الله أكبر"]
     TARGET = 33
 
-    # Helper
     def _update_done():
         st.session_state.tas_done = all(c >= TARGET for c in st.session_state.tas_counts)
 
     st.markdown('<div class="tasbih-card">', unsafe_allow_html=True)
 
-    # --- Barre de progression 0→99 (en haut) ---
+    # ===== Barre de progression 0→99 =====
     total = sum(st.session_state.tas_counts)
     pct   = int(round(min(total, 99) / 99 * 100))
     st.markdown(f"""
@@ -769,10 +772,10 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    # Titre
-    st.markdown('<div class="tas-title">🧿 تَسبيح</div>', unsafe_allow_html=True)
+    # ===== Titre =====
+    st.markdown('<div class="tas-title">تَسبيح</div>', unsafe_allow_html=True)
 
-    # --- Trois lignes : bouton = phrase + compteur à droite ---
+    # ===== 3 lignes : bouton (phrase) + compteur =====
     for i, ar in enumerate(phrases_ar):
         cnt = st.session_state.tas_counts[i]
         col_btn, col_cnt = st.columns([4, 1])
@@ -789,8 +792,10 @@ with st.sidebar:
         with col_cnt:
             st.markdown(f'<div class="tas-count">{cnt} / {TARGET}</div>', unsafe_allow_html=True)
 
-    # --- Dhikr final (apparaît seulement quand 3×33 terminés) ---
+    # ===== Dhikr final (visible uniquement quand 3×33 terminés) =====
     if st.session_state.tas_done:
+        # petit spacer supplémentaire si tu veux encore plus d'air :
+        # st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
         st.markdown(
             '<div class="tas-zikr">'
             'لَا إِلَهَ إِلَّا ٱللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، '
@@ -799,7 +804,7 @@ with st.sidebar:
             unsafe_allow_html=True
         )
 
-    # Actions
+    # ===== Actions =====
     c1, c2 = st.columns(2)
     with c1:
         if st.button("↺ Réinitialiser", key="tas_reset_all"):
@@ -1638,6 +1643,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
