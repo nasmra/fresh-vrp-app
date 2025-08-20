@@ -607,6 +607,8 @@ st.markdown("""
 - **Optimiser** : onglet **🚚 Optimisation** → *Importer les commandes* → *Lancer l'optimisation* (**distance**).
 - **Ajouter un client** : onglet **➕ Ajouter un client** → matrice & géocodage mis à jour **sur Drive**.
 - **Gestion des chauffeurs** : onglet **👷 Gestion des chauffeurs** → *Ajouter ou Supprmier*.
+- **Gestion des véhicules** : onglet **👷 Gestion des véhicules** → *Ajouter ou Supprmier*.
+
 """)
 
 # =========================================================
@@ -1877,6 +1879,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
