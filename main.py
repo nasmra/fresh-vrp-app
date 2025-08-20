@@ -1492,10 +1492,7 @@ with tab_drivers:
                                     except Exception as _e:
                                         st.warning(f"Impossible d'afficher la liste mise à jour : {_e}")
     
-                                    # 👉 Optionnel : bouton pour réinitialiser proprement la sélection
-                                    if st.button("↺ Réinitialiser la sélection"):
-                                        st.session_state["_reset_del_form"] = True
-                                        st.rerun()
+
     
                             except Exception as e:
                                 st.error(f"Erreur pendant la suppression : {e}")
@@ -1899,4 +1896,5 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
