@@ -1245,24 +1245,17 @@ with tab_drivers:
         "🗑️ Supprimer définitivement un chauffeur"
     ])
 
-
-
     # -------------------- ➕ AJOUTER UN CHAUFFEUR --------------------
     with sub_tab_add:
-        # reset différé des champs d'ajout (doit être exécuté AVANT la création des widgets)
+        # reset différé des champs d'ajout
         _deferred_reset("_reset_add_form", ["nom_input", "prenom_input", "vehicule_select", "confirm_add", "statut_select"])
-    
-        # Message flash (succès) après rerun
-        if st.session_state.get("add_driver_msg"):
-            st.success(st.session_state["add_driver_msg"])
-            st.session_state.pop("add_driver_msg", None)  # on affiche une seule fois
-    
+
         col_a, col_b = st.columns(2)
         with col_a:
-            nom = st.text_input("Nom", "", key="nom_input")  # vide par défaut
+            nom = st.text_input("Nom", "", key="nom_input")
         with col_b:
-            prenom = st.text_input("Prénom", "", key="prenom_input")  # vide par défaut
-    
+            prenom = st.text_input("Prénom", "", key="prenom_input")
+
         # Liste des véhicules depuis vehicles.xlsx (SEULE source)
         vehicule_options = ["— Sélectionner —"]
         if veh_file:
@@ -1275,22 +1268,22 @@ with tab_drivers:
                     ]
             except Exception as e:
                 st.warning(f"Impossible de lire le fichier Véhicules : {e}")
-    
+
         chosen_vehicle = st.selectbox(
             "Véhicule affecté (depuis la liste)",
             vehicule_options,
-            index=0,                      # ← valeur par défaut
+            index=0,
             key="vehicule_select"
         )
-    
-        # Statut (défaut = Permanent)
+
+        # NOUVEAU : Statut Permanent / Temporaire
         statut = st.selectbox("Statut du chauffeur", ["Permanent", "Temporaire"], index=0, key="statut_select")
-    
+
         # -------- FORMULAIRE AVEC CONFIRMATION + PROGRESSION --------
         with st.form("form_add_driver", clear_on_submit=False):
             confirm = st.selectbox("Confirmer l'ajout de ce chauffeur ?", ["Non", "Oui"], index=0, key="confirm_add")
             submitted = st.form_submit_button("💾 Cliquez pour enregistrer le chauffeur")
-    
+
             if submitted:
                 # Validations
                 if not nom.strip() or not prenom.strip():
@@ -1301,27 +1294,29 @@ with tab_drivers:
                     st.error("Merci de confirmer l'ajout (choisir **Oui**)."); st.stop()
                 if not st.session_state.get("chauff_buf"):
                     st.error("Fichier Chauffeurs introuvable."); st.stop()
-    
+
                 try:
                     prog = st.progress(0, text="Initialisation…")
-    
+
                     # 1) Ouvrir le classeur existant
                     prog.progress(15, text="Ouverture du classeur…")
                     st.session_state["chauff_buf"].seek(0)
                     original_bytes = st.session_state["chauff_buf"].read()
                     from openpyxl import load_workbook
                     wb = load_workbook(BytesIO(original_bytes))
-    
+
                     # 2) Feuille 'Liste'
                     ws = _get_ws(wb, "Liste")
-    
-                    # 3) Garantir les colonnes nécessaires
+
+                    # 3) Garantir les colonnes nécessaires, sans écraser les autres
                     prog.progress(35, text="Préparation de la feuille…")
+                    # Nettoyage d'une ancienne colonne 'Actif' si présente
                     headers_now = [ws.cell(1, c).value for c in range(1, ws.max_column + 1)]
                     if "Actif" in headers_now:
                         col_act = headers_now.index("Actif") + 1
                         ws.delete_cols(col_act, 1)
-    
+
+                    # Helper: créer la colonne si elle n'existe pas, sinon renvoyer son index
                     def _ensure_col(name):
                         hdrs = [ws.cell(1, c).value for c in range(1, ws.max_column + 1)]
                         if name in hdrs:
@@ -1329,44 +1324,52 @@ with tab_drivers:
                         col = ws.max_column + 1
                         ws.cell(1, col, name)
                         return col
-    
+
                     col_nom   = _ensure_col("Nom")
                     col_pre   = _ensure_col("Prénom")
                     col_veh   = _ensure_col("Véhicule affecté")
-                    col_stat  = _ensure_col("Statut")
-    
+                    col_stat  = _ensure_col("Statut")     # <-- NOUVELLE COLONNE
+                    # (Les autres colonnes comme "Distance parcourue (km)" restent en place)
+
                     # 4) Écriture compacte
                     prog.progress(55, text="Écriture de la nouvelle ligne…")
                     target_row = _first_empty_row_compact(ws, [col_nom, col_pre, col_veh], start=2)
                     ws.cell(target_row, col_nom, nom.strip())
                     ws.cell(target_row, col_pre, prenom.strip())
                     ws.cell(target_row, col_veh, chosen_vehicle)
-                    ws.cell(target_row, col_stat, statut)
-    
+                    ws.cell(target_row, col_stat, statut)  # <-- écrit le statut
+
                     # 5) Sauvegarde + Upload
                     prog.progress(75, text="Sauvegarde du fichier…")
                     out = BytesIO(); wb.save(out); out.seek(0)
-    
+
                     prog.progress(85, text="Envoi vers Google Drive…")
                     drive_upload(st.secrets["drive"]["chauffeurs"], out.getvalue())
-    
+
                     # 6) Re-télécharger & rebind
                     prog.progress(95, text="Vérification de l'écriture…")
                     b = drive_download(st.secrets["drive"]["chauffeurs"])
+                    tmp = BytesIO(b); tmp.seek(0)
+                    df_check = pd.read_excel(tmp, sheet_name="Liste")
+
                     st.session_state["chauff_buf"] = BytesIO(b)
                     st.session_state["chauff_buf"].seek(0)
-    
+
                     prog.progress(100, text="Terminé ✅")
-    
-                    # ✅ Message de succès + RESET des champs aux VALEURS PAR DÉFAUT
-                    st.session_state["add_driver_msg"]  = f"✅ {nom} {prenom} ajouté à la liste (ligne {target_row})."
-                    st.session_state["_reset_add_form"] = True  # vide les widgets & revient aux index par défaut
+                    st.success(f"✅ {nom} {prenom} ajouté à la liste (ligne {target_row}).")
+
+                    # Affichage de la liste mise à jour (sera aussi affichée après rerun)
+                    st.markdown("### 📃 Liste des chauffeurs (mise à jour)")
+                    st.dataframe(df_check, use_container_width=True)
+
+                    # Reset différé des champs + rerun
+                    st.session_state["_reset_add_form"] = True
                     st.rerun()
-    
+
                 except Exception as e:
                     st.error(f"Erreur lors de l'enregistrement : {e}")
-    
-        # Liste courante en dessous (toujours visible)
+
+        # Afficher la liste courante en dessous (utile après rerun)
         if st.session_state.get("chauff_buf"):
             try:
                 st.session_state["chauff_buf"].seek(0)
@@ -1379,7 +1382,7 @@ with tab_drivers:
 
     # -------------------- 🗑️ SUPPRIMER DÉFINITIVEMENT --------------------
     with sub_tab_del:
-        _deferred_reset("_reset_del_form", ["del_choice", "del_text"])  # pas de del_ack ici
+        _deferred_reset("_reset_del_form", ["del_choice", "del_text"])  # plus de del_ack
     
         _chauff_buf = st.session_state.get("chauff_buf")
         if not _chauff_buf:
@@ -1479,7 +1482,7 @@ with tab_drivers:
                                         f"({len(rows_to_delete)} ligne(s))."
                                     )
     
-                                    # 👉 Afficher la liste restante (sans toucher au selectbox)
+                                    # 👉 Afficher la liste restante (comme pour les véhicules)
                                     try:
                                         st.session_state["chauff_buf"].seek(0)
                                         df_ch_updated = pd.read_excel(st.session_state["chauff_buf"], sheet_name="Liste")
@@ -1488,13 +1491,12 @@ with tab_drivers:
                                     except Exception as _e:
                                         st.warning(f"Impossible d'afficher la liste mise à jour : {_e}")
     
-                                    # 👉 Optionnel : bouton pour réinitialiser proprement la sélection
-                                    if st.button("↺ Réinitialiser la sélection"):
-                                        st.session_state["_reset_del_form"] = True
-                                        st.rerun()
+                                    # Optionnel : réinitialiser la sélection dans l'UI (sans rerun)
+                                    st.session_state["del_choice"] = "— Aucun —"
     
                             except Exception as e:
                                 st.error(f"Erreur pendant la suppression : {e}")
+
 
 # =========================================================
 #                ONGLET GESTION DES VÉHICULES
@@ -1894,60 +1896,3 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
