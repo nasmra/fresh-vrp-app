@@ -728,7 +728,7 @@ with st.sidebar:
 
     st.markdown('<div class="tasbih-card">', unsafe_allow_html=True)
     total = sum(st.session_state.tas_counts)
-    st.markdown(f'<div class="tas-title">🧿 تَسبيح <span class="tas-sub">(Total : {total}/99)</span></div>',
+    st.markdown(f'<div class="tas-title">تَسبيح <span class="tas-sub">(Total : {total}/99)</span></div>',
                 unsafe_allow_html=True)
 
     # 3 lignes : bouton (phrase) + compteur à droite
@@ -1586,6 +1586,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
