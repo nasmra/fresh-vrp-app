@@ -502,10 +502,12 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
                 ("BOTTOMPADDING",(0,0), (-1,-1), 3),
             ]))
 
-            # 2) LIGNE BLANCHE : PDT/Cartons + adresse
-            l2 = f"PDT : {kg} Kgs dont : 0 filets - Boulangerie {ct} Cartons"
-            row2 = Table([[Paragraph(l2, style_line_small),
-                           Paragraph(adr_affiche, styles["Normal"])]],
+            # 2) LIGNE BLANCHE : Code + PDT/Cartons + adresse
+            l2_text   = f"PDT : {kg} Kgs dont : 0 filets - Boulangerie {ct} Cartons"
+            left_html = f"<b>Code :</b> {code}<br/>{l2_text}"
+            
+            row2 = Table([[Paragraph(left_html, style_line_small),
+                           Paragraph(adr_affiche, styles['Normal'])]],
                          colWidths=col_w)
             row2.setStyle(TableStyle([
                 ("BOX",          (0,0), (-1,-1), 1, colors.black),
@@ -514,6 +516,7 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
                 ("TOPPADDING",   (0,0), (-1,-1), 3),
                 ("BOTTOMPADDING",(0,0), (-1,-1), 4),
             ]))
+
 
             # Espace entre clients
             flow.extend([row1, row2, Spacer(1, 0.15*cm)])
@@ -1524,6 +1527,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
