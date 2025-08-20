@@ -144,23 +144,42 @@ def update_kilometrage_file(workbook, delivery_data):
 
 
 def update_distance_parcourue(workbook):
+    # Besoin des deux feuilles
     if not {"Liste", "Kilométrage"}.issubset(workbook.sheetnames):
         return
     ws_list = workbook["Liste"]
     ws_km   = workbook["Kilométrage"]
 
+    import unicodedata, re
+    def _to_float(x):
+        if x is None: return 0.0
+        try:
+            return float(x)
+        except Exception:
+            s = re.sub(r"[^\d\.,-]", "", str(x)).replace(",", ".")
+            try: return float(s)
+            except Exception: return 0.0
 
+    def _norm_text(s: str) -> str:
+        s = unicodedata.normalize("NFKC", str(s or ""))
+        s = s.replace("\xa0", " ")                 # espace insécable
+        s = re.sub(r"\s+", " ", s).strip()
+        s = re.sub(r"\s*:\s*", ": ", s)            # “: ” uniforme
+        return s.lower()
+
+    def _strip_prefix_nom(nom: str) -> str:
+        # enlève “Chauffeur 3 :”, “chauffeur 12:”, etc.
+        return re.sub(r"^\s*chauffeur\s*\d+\s*:\s*", "", str(nom or ""), flags=re.I)
+
+    # ---- Sommes depuis Kilométrage (clé = nom complet normalisé)
+    from collections import defaultdict
     totals = defaultdict(float)
     for _, chauffeur, _, dist in ws_km.iter_rows(min_row=2, values_only=True):
-        if dist is None: continue
-        try: d = float(dist)
-        except:
-            s = re.sub(r"[^\d\.,]", "", str(dist)).replace(",", ".")
-            try: d = float(s)
-            except: d = 0.0
-        totals[chauffeur] += d
+        if not chauffeur:
+            continue
+        totals[_norm_text(chauffeur)] += _to_float(dist)
 
-
+    # ---- Colonne cible sur Liste
     headers = [cell.value for cell in ws_list[1]]
     if "Distance parcourue (km)" in headers:
         col = headers.index("Distance parcourue (km)") + 1
@@ -168,15 +187,19 @@ def update_distance_parcourue(workbook):
         col = len(headers) + 1
         ws_list.cell(1, col, "Distance parcourue (km)")
 
-
+    # ---- Mise à jour ligne à ligne
     for r in range(2, ws_list.max_row + 1):
         nom    = ws_list.cell(r, 1).value
         prenom = ws_list.cell(r, 2).value
-        if nom and prenom:
-            key = f"{nom} {prenom}"
-            ws_list.cell(r, col, totals.get(key, 0.0))
-        else:
-            ws_list.cell(r, col, None)
+
+        # clé primaire = "Nom Prénom"
+        k1 = _norm_text(f"{nom} {prenom}")
+        # fallback sans le préfixe "Chauffeur N :"
+        k2 = _norm_text(f"{_strip_prefix_nom(nom)} {prenom}")
+
+        val = totals.get(k1, totals.get(k2, 0.0))
+        ws_list.cell(r, col, round(val, 1))
+
 
 
 
@@ -540,5 +563,6 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
 
