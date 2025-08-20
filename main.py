@@ -1670,23 +1670,24 @@ with tab_vehicles:
                     unsafe_allow_html=True
                 )
     
-                # === Checkbox : label BLANC + écart réduit (scopé à ce bloc) ===
+                # === Styles SCOPÉS (ID) : forcer le label en blanc + réduire l'écart ===
                 st.markdown("""
                 <style>
-                  /* Portée : uniquement dans ce conteneur */
-                  .veh-del-scope [data-baseweb="checkbox"] * { color:#fff !important; }
-                  /* Réduire l'écart entre la case et le texte */
-                  .veh-del-scope [data-baseweb="checkbox"] label{
+                  /* Tout texte à l'intérieur du conteneur est blanc */
+                  #veh-del-scope, #veh-del-scope * { color:#fff !important; }
+                  /* Cibler précisément le label du checkbox */
+                  #veh-del-scope div[data-testid="stCheckbox"] label{
                       display:inline-flex; align-items:center; gap:8px !important; margin:0 !important;
                   }
                 </style>
                 """, unsafe_allow_html=True)
     
-                st.markdown('<div class="veh-del-scope">', unsafe_allow_html=True)
+                # Conteneur scopé
+                st.markdown('<div id="veh-del-scope">', unsafe_allow_html=True)
                 ok = st.checkbox("Je comprends que cette action est irréversible.", key="veh_del_ack")
                 st.markdown('</div>', unsafe_allow_html=True)
     
-                # Confirmation texte
+                # Confirmation texte (peut rester blanc, car dans la même zone)
                 txt = st.text_input("Tapez SUPPRIMER pour confirmer", "", key="veh_del_text")
     
                 # Bouton d'exécution
@@ -1727,6 +1728,7 @@ with tab_vehicles:
     
                         except Exception as e:
                             st.error(f"Erreur pendant la suppression : {e}")
+
 
 # ==============================
 # Fonction pour géocoder via Google
@@ -1892,6 +1894,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
