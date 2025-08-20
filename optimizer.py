@@ -149,6 +149,7 @@ def update_distance_parcourue(workbook):
     ws_list = workbook["Liste"]
     ws_km   = workbook["Kilométrage"]
 
+
     totals = defaultdict(float)
     for _, chauffeur, _, dist in ws_km.iter_rows(min_row=2, values_only=True):
         if dist is None: continue
@@ -159,12 +160,14 @@ def update_distance_parcourue(workbook):
             except: d = 0.0
         totals[chauffeur] += d
 
+
     headers = [cell.value for cell in ws_list[1]]
     if "Distance parcourue (km)" in headers:
         col = headers.index("Distance parcourue (km)") + 1
     else:
         col = len(headers) + 1
         ws_list.cell(1, col, "Distance parcourue (km)")
+
 
     for r in range(2, ws_list.max_row + 1):
         nom    = ws_list.cell(r, 1).value
@@ -174,6 +177,7 @@ def update_distance_parcourue(workbook):
             ws_list.cell(r, col, totals.get(key, 0.0))
         else:
             ws_list.cell(r, col, None)
+
 
 
 # ======================================================
@@ -536,4 +540,5 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
