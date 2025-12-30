@@ -31,7 +31,8 @@ def inject_brand_css():
     brand_orange = "#F7941D"
     light_text   = "#FFFFFF"
     dark_text    = "#0B1F44"
-    bg = "#042B80"
+    #bg = "#042B80"
+    bg = "#DFF5E1"
     pattern_opacity = 0.012
 
     logo_b64 = _logo_b64()
@@ -1780,6 +1781,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
