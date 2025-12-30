@@ -1645,7 +1645,7 @@ with tab_add:
         # Formulaire
         addr = st.text_input("Adresse complète", placeholder="Nom, adresse")
         code = st.text_input("Code (tiers)")
-        add_btn = st.button("➕ Ajouter & mettre à jour Drive")
+        add_btn = st.button("➕ Ajouter & mettre à jour les données")
 
     # La carte s'affichera tout en haut de la colonne de droite (alignée avec le titre)
     with col_right:
@@ -1782,6 +1782,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
