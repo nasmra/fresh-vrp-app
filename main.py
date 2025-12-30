@@ -28,12 +28,9 @@ def _logo_b64(path: str = "assets/logo_company_3.png") -> str:
 
 def inject_brand_css():
     brand_blue   = "#0C3D91"
-    #brand_orange = "#F7941D"
-    brand_orange = "#a8e6b9"   # vert menthe
-
+    brand_orange = "#F7941D"
     light_text   = "#FFFFFF"
     dark_text    = "#0B1F44"
-
     #bg = "#042B80"
     bg = "#7e55e7"
     pattern_opacity = 0.012
@@ -92,16 +89,14 @@ def inject_brand_css():
       div[role="tablist"] > button[role="tab"][aria-selected="true"] {{ border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25); }}
       div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{ background:{brand_orange} !important; height:3px !important; border-radius:2px; }}
 
-      /*.stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}*/
-      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #5FB89A; }}
-
-      .stButton>button:hover {{ background:#7ED6B3; }}
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button:hover {{ background:#FFA23A; }}
       .stApp [data-testid="stFormSubmitButton"] button,
       .stApp [data-testid="stForm"] button,
       .stApp form button,
       .stApp button[kind][data-testid^="baseButton"] {{
         background:{brand_orange} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
-        padding:.55rem 1rem !important; box-shadow:0 3px 0 #5FB89A !important;
+        padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
       }}
       .stApp [data-testid="stFormSubmitButton"] button:hover,
       .stApp [data-testid="stForm"] button:hover,
@@ -1786,13 +1781,6 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
-
-
-
-
-
-
-
 
 
 
