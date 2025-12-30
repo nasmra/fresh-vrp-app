@@ -28,10 +28,11 @@ def _logo_b64(path: str = "assets/logo_company_3.png") -> str:
 
 def inject_brand_css():
     brand_blue   = "#0C3D91"
-    mint_green = "#F7941D"
+    #brand_orange = "#F7941D"
+    brand_orange = "#A8E6CF"   # vert menthe
+
     light_text   = "#FFFFFF"
     dark_text    = "#0B1F44"
-    mint_green = "#A8E6CF"   # vert menthe
 
     #bg = "#042B80"
     bg = "#7e55e7"
@@ -88,16 +89,16 @@ def inject_brand_css():
         box-shadow:0 1px 1px rgba(7,28,71,.06); font-weight:600 !important; color:#000 !important;
       }}
       div[data-baseweb="tab-list"] button[aria-selected="true"],
-      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{ border-color:{mint_green} !important; box-shadow:0 2px 6px rgba(247,148,29,.25); }}
-      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{ background:{mint_green} !important; height:3px !important; border-radius:2px; }}
+      div[role="tablist"] > button[role="tab"][aria-selected="true"] {{ border-color:{brand_orange} !important; box-shadow:0 2px 6px rgba(247,148,29,.25); }}
+      div[data-baseweb="tab-highlight"], div[role="tablist"] > div[aria-hidden="true"] {{ background:{brand_orange} !important; height:3px !important; border-radius:2px; }}
 
-      .stButton>button {{ background:{mint_green}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
+      .stButton>button {{ background:{brand_orange}; color:#fff; border:0; border-radius:10px; padding:.55rem 1rem; box-shadow:0 3px 0 #d17f12; }}
       .stButton>button:hover {{ background:#FFA23A; }}
       .stApp [data-testid="stFormSubmitButton"] button,
       .stApp [data-testid="stForm"] button,
       .stApp form button,
       .stApp button[kind][data-testid^="baseButton"] {{
-        background:{mint_green} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
+        background:{brand_orange} !important; color:#fff !important; border:0 !important; border-radius:10px !important;
         padding:.55rem 1rem !important; box-shadow:0 3px 0 #d17f12 !important;
       }}
       .stApp [data-testid="stFormSubmitButton"] button:hover,
@@ -108,7 +109,7 @@ def inject_brand_css():
       /* HÉRO & titre */
       .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
       .welcome-card {{
-        background:{mint_green}; color:#fff; padding:22px 28px; border-radius:16px;
+        background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
         box-shadow:0 10px 24px rgba(0,0,0,.18);
         max-width:880px; width:min(92vw,880px); text-align:center;
       }}
@@ -164,7 +165,7 @@ def inject_brand_css():
       .stApp [data-testid="stSpinner"] {{ display:none !important; }}
       .fd-wip {{ display:inline-flex; align-items:center; gap:.6rem; color:{light_text} !important; font-weight:600; }}
       .fd-wip .fd-ico {{
-        width:24px; height:24px; color:{mint_green};
+        width:24px; height:24px; color:{brand_orange};
         fill:currentColor; stroke:currentColor; 
         animation: fd-flip 1.1s linear infinite;
       }}
@@ -1783,6 +1784,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
