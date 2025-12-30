@@ -390,7 +390,7 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
     if not code_col:
         code_col = "Code (tiers)"
         if code_col not in df_geo.columns:
-            df_geo[code_col] = "FRESH DISTRIB"
+            df_geo[code_col] = "Entrepôt"
     geo_map = df_geo.set_index(code_col).to_dict(orient="index")
 
     # --- Poids/Cartons par client (depuis commandes) ---
@@ -427,7 +427,7 @@ def _generate_pdf_tours(assigned: list, df_geo: pd.DataFrame, orders_df: pd.Data
         veh       = tour["vehicle"]      # ex. "IVECO FK-233-XA"
 
         # Clients réellement imprimés (on enlève le dépôt)
-        codes_to_render = [c for c in (tour["nodes"] or []) if c and c.upper() != "FRESH DISTRIB"]
+        codes_to_render = [c for c in (tour["nodes"] or []) if c and c.upper() != "Entrepôt"]
 
         # === Totaux calculés sur ces mêmes clients ===
         nb_resto = len(codes_to_render)
@@ -1006,7 +1006,7 @@ with tab_opt:
 
                 # colonne code client / dépôt
                 code_col = next((c for c in df_coords.columns if "Code" in c and "tiers" in c), None)
-                df_coords["_code"] = df_coords.get(code_col, "FRESH DISTRIB").fillna("FRESH DISTRIB")
+                df_coords["_code"] = df_coords.get(code_col, "Entrepôt").fillna("Entrepôt")
 
                 # nom du client (prend "Nom du client" si dispo, sinon "Nom")
                 name_col = "Nom du client" if "Nom du client" in df_coords.columns else ("Nom" if "Nom" in df_coords.columns else None)
@@ -1077,9 +1077,9 @@ with tab_opt:
                                 pt = (coord_dict[code]['Latitude'], coord_dict[code]['Longitude'])
                                 path.append(pt)
                                 label = (f"{code} : {coord_dict[code].get(name_col)}"
-                                        if name_col and code != "FRESH DISTRIB"
-                                        else (coord_dict[code].get(name_col) or "FRESH DISTRIB"))
-                                if code == "FRESH DISTRIB":
+                                        if name_col and code != "Entrepôt"
+                                        else (coord_dict[code].get(name_col) or "Entrepôt"))
+                                if code == "Entrepôt":
                                     folium.Marker(pt, icon=folium.Icon(color="darkblue", icon="home", prefix="fa"),
                                                 popup=label).add_to(m)
                                 else:
@@ -1688,7 +1688,7 @@ with tab_add:
             # --- Chargement des fichiers ---
             st.session_state.geo_buf.seek(0)
             df_geo = pd.read_excel(st.session_state.geo_buf)
-            df_geo["Code (tiers)"] = df_geo.get("Code (tiers)", pd.Series()).fillna("FRESH DISTRIB")
+            df_geo["Code (tiers)"] = df_geo.get("Code (tiers)", pd.Series()).fillna("Entrepôt")
 
             st.session_state.dist_buf.seek(0)
             df_mat = pd.read_excel(st.session_state.dist_buf, index_col=0)
@@ -1696,7 +1696,7 @@ with tab_add:
             # --- Ajout du nouveau client ---
             new_geo = {"Adresse": addr, "Code (tiers)": code, "Latitude": lat, "Longitude": lon}
             df_geo = pd.concat([df_geo, pd.DataFrame([new_geo])], ignore_index=True)
-            df_geo["Code (tiers)"].fillna("FRESH DISTRIB", inplace=True)
+            df_geo["Code (tiers)"].fillna("Entrepôt", inplace=True)
             
             # --- Calcul des distances OSRM ---
             coords = {r["Code (tiers)"]: (r["Longitude"], r["Latitude"]) for _, r in df_geo.iterrows()}
@@ -1782,6 +1782,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
