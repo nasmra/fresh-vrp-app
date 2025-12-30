@@ -1462,8 +1462,9 @@ with tab_vehicles:
         col1, col2 = st.columns([2, 1])
     
         with col1:
-            vname = st.text_input("Véhicule", placeholder="Ex. MERCEDES VITO GC-246-FY")
-    
+            #vname = st.text_input("Véhicule", placeholder="Ex. MERCEDES VITO GC-246-FY")
+            vname = st.text_input("Véhicule", placeholder="Ex. MERCEDES Immatriculation")
+
             # --- Liste déroulante pour "Informations supplémentaires"
             INFO_PRESETS = (
                 ["— Aucune —"]
@@ -1779,6 +1780,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
