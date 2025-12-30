@@ -238,10 +238,10 @@ def _compute_route_distance_km(seq_nodes, nodes, km_matrix):
     if not seq_nodes: return 0.0
     idx = {n: i for i, n in enumerate(nodes)}
     d = 0.0
-    d += km_matrix[idx["FRESH DISTRIB"]][idx[seq_nodes[0]]]
+    d += km_matrix[idx["Entrepôt"]][idx[seq_nodes[0]]]
     for a, b in zip(seq_nodes, seq_nodes[1:]):
         d += km_matrix[idx[a]][idx[b]]
-    d += km_matrix[idx[seq_nodes[-1]]][idx["FRESH DISTRIB"]]
+    d += km_matrix[idx[seq_nodes[-1]]][idx["Entrepôt"]]
     return float(d)
 
 
@@ -423,7 +423,7 @@ def run_optimization(
     client_codes = orders_f["Code client"].dropna().astype(str).unique().tolist()
     valid = set(dist_mat_raw.index) & set(dist_mat_raw.columns)
     cust  = [c for c in client_codes if c in valid]
-    nodes = ["FRESH DISTRIB"] + cust
+    nodes = ["Entrepôt"] + cust
     if len(nodes) <= 1:
         return "Aucune commande exploitable.", None
 
@@ -550,9 +550,9 @@ def run_optimization(
         ws.append([f"Véhicule : {vehicle}"])
         ws.append(["Code client", "Adresse", "Ordre de visite"])
 
-        full_seq = ["FRESH DISTRIB"] + r["seq"] + ["FRESH DISTRIB"]
+        full_seq = ["Entrepôt"] + r["seq"] + ["Entrepôt"]
         for j, code in enumerate(full_seq, start=1):
-            adresse = "DEPOT - FRESH DISTRIB" if code == "FRESH DISTRIB" else addr_by_code.get(code, "")
+            adresse = "DEPOT - Entrepôt" if code == "Entrepôt" else addr_by_code.get(code, "")
             ws.append([code, adresse, j])
 
         for col in ws.columns:
@@ -590,6 +590,7 @@ def run_optimization(
 
     result_str += f"\nTotal : {int(round(total_d))} km | {total_w:.1f} kg | {total_c:.1f} cartons"
     return result_str, out
+
 
 
 
