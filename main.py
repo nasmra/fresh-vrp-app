@@ -701,7 +701,7 @@ if _all_loaded():
 else:
     st.sidebar.warning("⚠️ Données incomplètes. Cliquez sur le bouton pour recharger.")
 
-if st.sidebar.button("🔄 Recharger depuis Drive"):
+if st.sidebar.button("🔄 Recharger"):
     load_from_drive_into_session()
     st.sidebar.success("✅ Données rechargées.")
     st.rerun()
@@ -1782,6 +1782,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
