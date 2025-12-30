@@ -31,6 +31,8 @@ def inject_brand_css():
     brand_orange = "#F7941D"
     light_text   = "#FFFFFF"
     dark_text    = "#0B1F44"
+    mint_green = "#A8E6CF"   # vert menthe
+
     #bg = "#042B80"
     bg = "#7e55e7"
     pattern_opacity = 0.012
@@ -106,7 +108,7 @@ def inject_brand_css():
       /* HÉRO & titre */
       .welcome-wrap {{ display:flex; justify-content:center; margin: 18px 0 10px; }}
       .welcome-card {{
-        background:{brand_orange}; color:#fff; padding:22px 28px; border-radius:16px;
+        background:{mint_green}; color:#fff; padding:22px 28px; border-radius:16px;
         box-shadow:0 10px 24px rgba(0,0,0,.18);
         max-width:880px; width:min(92vw,880px); text-align:center;
       }}
@@ -1781,6 +1783,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
