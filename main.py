@@ -9,14 +9,14 @@ import streamlit as st
 
 
 
-def _logo_b64(path: str = "assets/company_logo.png") -> str:
+def _logo_b64(path: str = "assets/company_logo_2.png") -> str:
     """Retourne le logo encodé en base64 (cherche à plusieurs emplacements)."""
     candidates = [
         Path(path),
         Path.cwd() / path,
-        Path.cwd() / "assets" / "company_logo.png",
+        Path.cwd() / "assets" / "company_logo_2.png",
         Path(__file__).resolve().parent / path,
-        Path(__file__).resolve().parent / "assets" / "company_logo.png",
+        Path(__file__).resolve().parent / "assets" / "company_logo_2.png",
     ]
     for p in candidates:
         try:
@@ -682,12 +682,12 @@ chauff_file = st.session_state.get("chauff_buf")
 #                 SIDEBAR : DONNÉES / RECHARGER
 # =========================================================
 APP_DIR = Path(__file__).resolve().parent
-LOGO_PATH = APP_DIR / "assets" / "company_logo.png"
+LOGO_PATH = APP_DIR / "assets" / "company_logo_2.png"
 
 if LOGO_PATH.exists():
     st.sidebar.image(str(LOGO_PATH), use_container_width=True)
 else:
-    st.sidebar.warning("Logo introuvable (assets/company_logo.png)")
+    st.sidebar.warning("Logo introuvable (assets/company_logo_2.png)")
 st.sidebar.header("📂 Données")
 
 def _all_loaded():
@@ -1779,6 +1779,7 @@ with tab_add:
             except Exception as e:
                 with col_left:
                     st.error(f"❌ Échec d'écriture sur Drive : {e}")
+
 
 
 
